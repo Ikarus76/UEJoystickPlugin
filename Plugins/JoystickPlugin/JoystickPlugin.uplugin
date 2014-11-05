@@ -1,0 +1,20 @@
+{
+    "FileVersion" : 3,
+	
+	"FriendlyName" : "Joystick Plugin",
+	"Version" : 3,
+	"VersionName" : "0.1.0",
+	"CreatedBy" : "Ikarus76",
+	"CreatedByURL" : "http://sambabyte.net",
+	"EngineVersion" : 1579795,
+	"Description" : "Unofficial plugin for Joystick Controllers",
+	"Category" : "Input.Controller",
+	
+    "Modules" :
+	[
+		{
+			"Name" : "JoystickPlugin",
+			"Type" : "Runtime"
+		}
+	]
+}
