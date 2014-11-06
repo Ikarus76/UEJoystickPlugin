@@ -61,39 +61,38 @@ void FJoystickPlugin::StartupModule()
 {
 	UE_LOG(LogClass, Log, TEXT("Attempting to startup Joystick Module."));
 
+	//Add the keys either way, these should always be available when plugin starts up
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton1, LOCTEXT("JoystickButton1", "Joystick Button 1"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton2, LOCTEXT("JoystickButton2", "Joystick Button 2"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton3, LOCTEXT("JoystickButton3", "Joystick Button 3"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton4, LOCTEXT("JoystickButton4", "Joystick Button 4"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton5, LOCTEXT("JoystickButton5", "Joystick Button 5"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton6, LOCTEXT("JoystickButton6", "Joystick Button 6"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton7, LOCTEXT("JoystickButton7", "Joystick Button 7"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton8, LOCTEXT("JoystickButton8", "Joystick Button 8"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton9, LOCTEXT("JoystickButton9", "Joystick Button 9"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton10, LOCTEXT("JoystickButton10", "Joystick Button 10"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton11, LOCTEXT("JoystickButton11", "Joystick Button 11"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton12, LOCTEXT("JoystickButton12", "Joystick Button 12"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton13, LOCTEXT("JoystickButton13", "Joystick Button 13"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton14, LOCTEXT("JoystickButton14", "Joystick Button 14"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton15, LOCTEXT("JoystickButton15", "Joystick Button 15"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton16, LOCTEXT("JoystickButton16", "Joystick Button 16"), FKeyDetails::GamepadKey));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisX, LOCTEXT("JoystickAxisX", "Joystick Axis X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisY, LOCTEXT("JoystickAxisY", "Joystick Axis Y"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisZ, LOCTEXT("JoystickAxisZ", "Joystick Axis Z"), FKeyDetails::FloatAxis));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisX, LOCTEXT("JoystickRAxisX", "Joystick RAxis X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisY, LOCTEXT("JoystickRAxisY", "Joystick RAxis Y"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisZ, LOCTEXT("JoystickRAxisZ", "Joystick RAxis Z"), FKeyDetails::FloatAxis));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVX, LOCTEXT("JoystickPOVX", "Joystick POV X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVY, LOCTEXT("JoystickPOVY", "Joystick POV Y"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider, LOCTEXT("JoystickSlider", "Joystick Slider"), FKeyDetails::FloatAxis));
+
 	if (S_OK == InitDirectInput()){
 		UE_LOG(LogClass, Log, TEXT("Direct Input initialized."));
-
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton1, LOCTEXT("JoystickButton1", "Joystick Button 1"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton2, LOCTEXT("JoystickButton2", "Joystick Button 2"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton3, LOCTEXT("JoystickButton3", "Joystick Button 3"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton4, LOCTEXT("JoystickButton4", "Joystick Button 4"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton5, LOCTEXT("JoystickButton5", "Joystick Button 5"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton6, LOCTEXT("JoystickButton6", "Joystick Button 6"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton7, LOCTEXT("JoystickButton7", "Joystick Button 7"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton8, LOCTEXT("JoystickButton8", "Joystick Button 8"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton9, LOCTEXT("JoystickButton9", "Joystick Button 9"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton10, LOCTEXT("JoystickButton10", "Joystick Button 10"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton11, LOCTEXT("JoystickButton11", "Joystick Button 11"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton12, LOCTEXT("JoystickButton12", "Joystick Button 12"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton13, LOCTEXT("JoystickButton13", "Joystick Button 13"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton14, LOCTEXT("JoystickButton14", "Joystick Button 14"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton15, LOCTEXT("JoystickButton15", "Joystick Button 15"), FKeyDetails::GamepadKey));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton16, LOCTEXT("JoystickButton16", "Joystick Button 16"), FKeyDetails::GamepadKey));
-
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisX, LOCTEXT("JoystickAxisX", "Joystick Axis X"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisY, LOCTEXT("JoystickAxisY", "Joystick Axis Y"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisZ, LOCTEXT("JoystickAxisZ", "Joystick Axis Z"), FKeyDetails::FloatAxis));
-
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisX, LOCTEXT("JoystickRAxisX", "Joystick RAxis X"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisY, LOCTEXT("JoystickRAxisY", "Joystick RAxis Y"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisZ, LOCTEXT("JoystickRAxisZ", "Joystick RAxis Z"), FKeyDetails::FloatAxis));
-
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVX, LOCTEXT("JoystickPOVX", "Joystick POV X"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVY, LOCTEXT("JoystickPOVY", "Joystick POV Y"), FKeyDetails::FloatAxis));
-		EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider, LOCTEXT("JoystickSlider", "Joystick Slider"), FKeyDetails::FloatAxis));
-
-
 	}
 	else{
 		UE_LOG(LogClass, Log, TEXT("Direct Input initialization failed."));
@@ -123,8 +122,14 @@ void FJoystickPlugin::SetDelegate(JoystickDelegate* newDelegate)
 
 void FJoystickPlugin::JoystickTick(float DeltaTime)
 {
-	//get the freshest data
+	//If we don't have a joystick check again maybe one was plugged in
+	if (!g_pJoystick){
+		if (S_OK != CheckForJoystickPlugin()){
+			return;
+		}
+	}
 
+	//get the freshest data
 	joystickControllerDataUE* newJoyData = new joystickControllerDataUE;
 	if(GetDeviceState(newJoyData))
 		m_pCollector->UpdateData(newJoyData);

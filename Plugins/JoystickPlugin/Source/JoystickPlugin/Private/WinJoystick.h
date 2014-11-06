@@ -45,12 +45,14 @@ namespace {
 	XINPUT_DEVICE_NODE*     g_pXInputDeviceList = nullptr;
 	LPDIRECTINPUT8          g_pDI = nullptr;
 	LPDIRECTINPUTDEVICE8    g_pJoystick = nullptr;
-
+	
 	struct DI_ENUM_CONTEXT
 	{
 		DIJOYCONFIG* pPreferredJoyCfg;
 		bool bPreferredJoyCfgValid;
 	};
+
+	DI_ENUM_CONTEXT enumContext;
 
 
 	/*
@@ -101,7 +103,7 @@ namespace {
 			SetupForIsXInputDevice();
 
 		DIJOYCONFIG PreferredJoyCfg = { 0 };
-		DI_ENUM_CONTEXT enumContext;
+		//DI_ENUM_CONTEXT enumContext;
 		enumContext.pPreferredJoyCfg = &PreferredJoyCfg;
 		enumContext.bPreferredJoyCfgValid = false;
 
@@ -143,6 +145,50 @@ namespace {
 		if (FAILED(hr = g_pJoystick->SetCooperativeLevel(hDlg, DISCL_EXCLUSIVE |
 			DISCL_FOREGROUND)))
 			return hr;*/
+
+		// Enumerate the joystick objects. The callback function enabled user
+		// interface elements for objects that are found, and sets the min/max
+		// values property for discovered axes.
+		if (FAILED(hr = g_pJoystick->EnumObjects(EnumObjectsCallback,
+			NULL/*enum param!*/, DIDFT_ALL)))
+			return hr;
+
+		return S_OK;
+	}
+
+	FORCEINLINE HRESULT CheckForJoystickPlugin()
+	{
+		HRESULT hr;
+
+		// Look for a simple joystick we can use for this sample program.
+		if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
+			EnumJoysticksCallback,
+			&enumContext, DIEDFL_ATTACHEDONLY)))
+			return hr;
+
+		//if (g_bFilterOutXinputDevices)
+		CleanupForIsXInputDevice();
+
+		// Make sure we got a joystick
+		if (!g_pJoystick)
+		{
+			return S_FALSE;
+		}
+
+		// Set the data format to "simple joystick" - a predefined data format 
+		//
+		// A data format specifies which controls on a device we are interested in,
+		// and how they should be reported. This tells DInput that we will be
+		// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
+		if (FAILED(hr = g_pJoystick->SetDataFormat(&c_dfDIJoystick2)))
+			return hr;
+
+		/*
+		// Set the cooperative level to let DInput know how this device should
+		// interact with the system and with other DInput applications.
+		if (FAILED(hr = g_pJoystick->SetCooperativeLevel(hDlg, DISCL_EXCLUSIVE |
+		DISCL_FOREGROUND)))
+		return hr;*/
 
 		// Enumerate the joystick objects. The callback function enabled user
 		// interface elements for objects that are found, and sets the min/max
