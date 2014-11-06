@@ -16,12 +16,12 @@ AJoystickPluginActor::AJoystickPluginActor(const FPostConstructInitializePropert
 //Override Callable Functions - Required to forward their implementations in order to compile, cannot skip implementation or bp definition
 bool AJoystickPluginActor::IsAvailable()
 {
-	return JoystickBlueprintDelegate::JoystickIsAvailable();
+	return JoystickDelegate::JoystickIsAvailable();
 }
 
 UJoystickSingleController* AJoystickPluginActor::GetLatestFrame()
 {
-	return JoystickBlueprintDelegate::JoystickGetLatestFrame();
+	return JoystickDelegate::JoystickGetLatestFrame();
 }
 
 //Required Overrides

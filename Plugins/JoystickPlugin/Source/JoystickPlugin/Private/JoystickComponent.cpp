@@ -1,5 +1,6 @@
 #include "JoystickPluginPrivatePCH.h"
 #include "JoystickComponent.h"
+#include "JoystickSingleController.h"
 #include "JoystickInterface.h"
 #include "Engine.h"
 #include "CoreUObject.h"
@@ -35,13 +36,13 @@ void UJoystickComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 //Override Callable Functions - Required to forward their implementations in order to compile, cannot skip implementation or bp definition
 bool UJoystickComponent::IsAvailable()
 {
-	return JoystickBlueprintDelegate::JoystickIsAvailable();
+	return JoystickDelegate::JoystickIsAvailable();
 }
 
 
 UJoystickSingleController* UJoystickComponent::GetLatestFrame()
 {
-	return JoystickBlueprintDelegate::JoystickGetLatestFrame();
+	return JoystickDelegate::JoystickGetLatestFrame();
 }
 
 

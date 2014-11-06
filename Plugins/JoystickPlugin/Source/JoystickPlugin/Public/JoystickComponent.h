@@ -1,11 +1,11 @@
 #pragma once
 
 #include "JoystickPluginPrivatePCH.h"
-#include "JoystickBlueprintDelegate.h"
+#include "JoystickDelegate.h"
 #include "JoystickComponent.generated.h"
 
 UCLASS(ClassGroup="Input Controller", meta=(BlueprintSpawnableComponent))
-class UJoystickComponent : public UActorComponent, public JoystickBlueprintDelegate
+class UJoystickComponent : public UActorComponent, public JoystickDelegate
 {
 	GENERATED_UCLASS_BODY()
 

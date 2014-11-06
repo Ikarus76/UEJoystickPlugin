@@ -15,12 +15,12 @@ AJoystickPlayerController::AJoystickPlayerController(const class FPostConstructI
 //Override Callable Functions - Required to forward their implementations in order to compile, cannot skip implementation or bp definition
 bool AJoystickPlayerController::IsAvailable()
 {
-	return JoystickBlueprintDelegate::JoystickIsAvailable();
+	return JoystickDelegate::JoystickIsAvailable();
 }
 
 UJoystickSingleController* AJoystickPlayerController::GetLatestFrame()
 {
-	return JoystickBlueprintDelegate::JoystickGetLatestFrame();
+	return JoystickDelegate::JoystickGetLatestFrame();
 }
 
 //Required Overrides, forward startup and tick.
