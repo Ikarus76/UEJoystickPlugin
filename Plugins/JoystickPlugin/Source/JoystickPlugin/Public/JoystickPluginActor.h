@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "JoystickBlueprintDelegate.h"
+#include "JoystickDelegate.h"
 #include "JoystickPluginActor.generated.h"
 
 
@@ -15,7 +15,7 @@
  */
 
 UCLASS()
-class AJoystickPluginActor : public AActor, public JoystickBlueprintDelegate, public IJoystickInterface //Multiple Inheritance, add HydraDelegate inheritance to inherit all delegate functionality
+class AJoystickPluginActor : public AActor, public JoystickDelegate, public IJoystickInterface //Multiple Inheritance, add JoystickDelegate inheritance to inherit all delegate functionality
 {
 	GENERATED_UCLASS_BODY()
 

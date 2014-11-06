@@ -3,6 +3,8 @@
 #include "JoystickDelegate.h"
 #include "JoystickSingleController.generated.h"
 
+struct joystickControllerDataUE;
+
 UCLASS(BlueprintType)
 class UJoystickSingleController : public UObject
 {
@@ -13,30 +15,26 @@ public:
 	int32 ButtonsPressed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 XAxis;
+	FVector Axis;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 YAxis;
+	FVector RAxis;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 ZAxis;
+	TEnumAsByte<JoystickPOVDirection> POV;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 RXAxis;
+	float Slider;
+
+	//blueprint Force feedback function here probably passed through plugin to DirectInput force feedback
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 RYAxis;
+	bool IsValid;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 RZAxis;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 POV1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int32 Slider1;
+	//Obtain POV axis
+	UFUNCTION(BlueprintCallable, Category = "Joystick Frame")
+	FVector2D POVAxis();
 
 	void Reset();
-
 	void setFromJoystickDataUE(joystickControllerDataUE* data);
 };

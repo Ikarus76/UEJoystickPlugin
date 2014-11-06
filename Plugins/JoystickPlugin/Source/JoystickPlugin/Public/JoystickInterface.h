@@ -1,7 +1,20 @@
 #pragma once
 
-#include "JoystickSingleController.h"
 #include "JoystickInterface.generated.h"
+
+UENUM(BlueprintType)
+enum JoystickPOVDirection
+{
+	DIRECTION_NONE,
+	DIRECTION_UP,
+	DIRECTION_UP_RIGHT,
+	DIRECTION_RIGHT,
+	DIRECTION_DOWN_RIGHT,
+	DIRECTION_DOWN,
+	DIRECTION_DOWN_LEFT,
+	DIRECTION_LEFT,
+	DIRECTION_UP_LEFT,
+};
 
 UINTERFACE(MinimalAPI)
 class UJoystickInterface : public UInterface
@@ -17,34 +30,22 @@ public:
 
 	//Define blueprint events
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonPressed(int32 ButtonNr);
+	void JoystickButtonPressed(int32 ButtonNr, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonReleased(int32 ButtonNr);
+	void JoystickButtonReleased(int32 ButtonNr, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickXAxisChanged(int32 AxisValue);
+	void JoystickAxisChanged(FVector AxisValue, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickYAxisChanged(int32 AxisValue);
+	void JoystickRAxisChanged(FVector AxisValue, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickZAxisChanged(int32 AxisValue);
+	void JoystickPOVChanged(JoystickPOVDirection POVDirection, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickRXAxisChanged(int32 AxisValue);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickRYAxisChanged(int32 AxisValue);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickRZAxisChanged(int32 AxisValue);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickPOV1Changed(int32 POVValue);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickSlider1Changed(int32 SliderValue);
+	void JoystickSliderChanged(float SliderValue, class UJoystickSingleController* controller);
 
 	virtual FString ToString();
 };

@@ -1,14 +1,14 @@
 #pragma once
 
 #include "GameFramework/PlayerController.h"
-#include "JoystickBlueprintDelegate.h"
+#include "JoystickDelegate.h"
 #include "JoystickPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class AJoystickPlayerController : public APlayerController, public JoystickBlueprintDelegate, public IJoystickInterface
+class AJoystickPlayerController : public APlayerController, public JoystickDelegate, public IJoystickInterface
 {
 	GENERATED_UCLASS_BODY()
 
