@@ -38,6 +38,22 @@ struct EKeysJoystick
 	static const FKey JoystickButton14;
 	static const FKey JoystickButton15;
 	static const FKey JoystickButton16;
+	static const FKey JoystickButton17;
+	static const FKey JoystickButton18;
+	static const FKey JoystickButton19;
+	static const FKey JoystickButton20;
+	static const FKey JoystickButton21;
+	static const FKey JoystickButton22;
+	static const FKey JoystickButton23;
+	static const FKey JoystickButton24;
+	static const FKey JoystickButton25;
+	static const FKey JoystickButton26;
+	static const FKey JoystickButton27;
+	static const FKey JoystickButton28;
+	static const FKey JoystickButton29;
+	static const FKey JoystickButton30;
+	static const FKey JoystickButton31;
+	static const FKey JoystickButton32;
 
 	static const FKey JoystickAxisX;
 	static const FKey JoystickAxisY;
@@ -47,18 +63,27 @@ struct EKeysJoystick
 	static const FKey JoystickRAxisY;
 	static const FKey JoystickRAxisZ;
 
-	static const FKey JoystickPOVX;
-	static const FKey JoystickPOVY;
-	static const FKey JoystickSlider;
+	static const FKey JoystickPOV1X;
+	static const FKey JoystickPOV1Y;
+
+	static const FKey JoystickPOV2X;
+	static const FKey JoystickPOV2Y;
+
+	static const FKey JoystickPOV3X;
+	static const FKey JoystickPOV3Y;
+
+	static const FKey JoystickSlider1;
+	static const FKey JoystickSlider2;
 };
 
 struct  joystickControllerDataUE{
 	//raw converted
-	int32 buttonsPressed;
+	int64 buttonsPressedL;
+	int64 buttonsPressedH;
 	FVector Axis;
 	FVector RAxis;
-	int32 POV1;
-	int32 Slider1;
+	FVector POV;
+	FVector2D Slider;
 	bool enabled;
 };
 
@@ -72,7 +97,7 @@ public:
 	virtual void AxisChanged(FVector vector, class UJoystickSingleController* frame);
 	virtual void RAxisChanged(FVector vector, class UJoystickSingleController* frame);
 	virtual void POVChanged(JoystickPOVDirection Value, class UJoystickSingleController* frame);
-	virtual void SliderChanged(float Value, class UJoystickSingleController* frame);
+	virtual void SliderChanged(FVector2D Value, class UJoystickSingleController* frame);
 
 	virtual bool JoystickIsAvailable();
 
