@@ -21,6 +21,22 @@ const FKey EKeysJoystick::JoystickButton13("JoystickButton13");
 const FKey EKeysJoystick::JoystickButton14("JoystickButton14");
 const FKey EKeysJoystick::JoystickButton15("JoystickButton15");
 const FKey EKeysJoystick::JoystickButton16("JoystickButton16");
+const FKey EKeysJoystick::JoystickButton17("JoystickButton17");
+const FKey EKeysJoystick::JoystickButton18("JoystickButton18");
+const FKey EKeysJoystick::JoystickButton19("JoystickButton19");
+const FKey EKeysJoystick::JoystickButton20("JoystickButton20");
+const FKey EKeysJoystick::JoystickButton21("JoystickButton21");
+const FKey EKeysJoystick::JoystickButton22("JoystickButton22");
+const FKey EKeysJoystick::JoystickButton23("JoystickButton23");
+const FKey EKeysJoystick::JoystickButton24("JoystickButton24");
+const FKey EKeysJoystick::JoystickButton25("JoystickButton25");
+const FKey EKeysJoystick::JoystickButton26("JoystickButton26");
+const FKey EKeysJoystick::JoystickButton27("JoystickButton27");
+const FKey EKeysJoystick::JoystickButton28("JoystickButton28");
+const FKey EKeysJoystick::JoystickButton29("JoystickButton29");
+const FKey EKeysJoystick::JoystickButton30("JoystickButton30");
+const FKey EKeysJoystick::JoystickButton31("JoystickButton31");
+const FKey EKeysJoystick::JoystickButton32("JoystickButton32");
 
 const FKey EKeysJoystick::JoystickAxisX("JoystickAxisX");
 const FKey EKeysJoystick::JoystickAxisY("JoystickAxisY");
@@ -30,9 +46,17 @@ const FKey EKeysJoystick::JoystickRAxisX("JoystickRAxisX");
 const FKey EKeysJoystick::JoystickRAxisY("JoystickRAxisY");
 const FKey EKeysJoystick::JoystickRAxisZ("JoystickRAxisZ");
 
-const FKey EKeysJoystick::JoystickPOVX("JoystickPOVX");
-const FKey EKeysJoystick::JoystickPOVY("JoystickPOVY");
-const FKey EKeysJoystick::JoystickSlider("JoystickSlider");
+const FKey EKeysJoystick::JoystickPOV1X("JoystickPOVX1");
+const FKey EKeysJoystick::JoystickPOV1Y("JoystickPOVY1");
+
+const FKey EKeysJoystick::JoystickPOV2X("JoystickPOVX2");
+const FKey EKeysJoystick::JoystickPOV2Y("JoystickPOVY2");
+
+const FKey EKeysJoystick::JoystickPOV3X("JoystickPOVX3");
+const FKey EKeysJoystick::JoystickPOV3Y("JoystickPOVY3");
+
+const FKey EKeysJoystick::JoystickSlider1("JoystickSlider1");
+const FKey EKeysJoystick::JoystickSlider2("JoystickSlider2");
 
 /** Empty Event Functions, no Super call required, because they don't do anything! */
 void JoystickDelegate::JoystickButtonPressed(int32 buttonNr, UJoystickSingleController* controller)
@@ -65,7 +89,7 @@ void JoystickDelegate::POVChanged(JoystickPOVDirection POVValue, UJoystickSingle
 		IJoystickInterface::Execute_JoystickPOVChanged(_interfaceDelegate, POVValue, controller);
 }
 
-void JoystickDelegate::SliderChanged(float SliderValue, UJoystickSingleController* controller)
+void JoystickDelegate::SliderChanged(FVector2D SliderValue, UJoystickSingleController* controller)
 {
 	if (implementsInterface())
 		IJoystickInterface::Execute_JoystickSliderChanged(_interfaceDelegate, SliderValue, controller);

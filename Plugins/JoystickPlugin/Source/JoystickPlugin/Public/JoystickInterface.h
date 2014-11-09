@@ -16,6 +16,14 @@ enum JoystickPOVDirection
 	DIRECTION_UP_LEFT,
 };
 
+UENUM(BlueprintType)
+enum POVIndex
+{
+	POV_1,
+	POV_2,
+	POV_3
+};
+
 UINTERFACE(MinimalAPI)
 class UJoystickInterface : public UInterface
 {
@@ -45,7 +53,7 @@ public:
 	void JoystickPOVChanged(JoystickPOVDirection POVDirection, class UJoystickSingleController* controller);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickSliderChanged(float SliderValue, class UJoystickSingleController* controller);
+	void JoystickSliderChanged(FVector2D SliderValue, class UJoystickSingleController* controller);
 
 	virtual FString ToString();
 };

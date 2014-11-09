@@ -78,6 +78,22 @@ void FJoystickPlugin::StartupModule()
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton14, LOCTEXT("JoystickButton14", "Joystick Button 14"), FKeyDetails::GamepadKey));
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton15, LOCTEXT("JoystickButton15", "Joystick Button 15"), FKeyDetails::GamepadKey));
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton16, LOCTEXT("JoystickButton16", "Joystick Button 16"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton17, LOCTEXT("JoystickButton17", "Joystick Button 17"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton18, LOCTEXT("JoystickButton18", "Joystick Button 18"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton19, LOCTEXT("JoystickButton19", "Joystick Button 19"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton20, LOCTEXT("JoystickButton20", "Joystick Button 20"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton21, LOCTEXT("JoystickButton21", "Joystick Button 21"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton22, LOCTEXT("JoystickButton22", "Joystick Button 22"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton23, LOCTEXT("JoystickButton23", "Joystick Button 23"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton24, LOCTEXT("JoystickButton24", "Joystick Button 24"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton25, LOCTEXT("JoystickButton25", "Joystick Button 25"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton26, LOCTEXT("JoystickButton26", "Joystick Button 26"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton27, LOCTEXT("JoystickButton27", "Joystick Button 27"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton28, LOCTEXT("JoystickButton28", "Joystick Button 28"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton29, LOCTEXT("JoystickButton29", "Joystick Button 29"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton30, LOCTEXT("JoystickButton30", "Joystick Button 30"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton31, LOCTEXT("JoystickButton31", "Joystick Button 31"), FKeyDetails::GamepadKey));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton32, LOCTEXT("JoystickButton32", "Joystick Button 32"), FKeyDetails::GamepadKey));
 
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisX, LOCTEXT("JoystickAxisX", "Joystick Axis X"), FKeyDetails::FloatAxis));
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickAxisY, LOCTEXT("JoystickAxisY", "Joystick Axis Y"), FKeyDetails::FloatAxis));
@@ -87,9 +103,17 @@ void FJoystickPlugin::StartupModule()
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisY, LOCTEXT("JoystickRAxisY", "Joystick RAxis Y"), FKeyDetails::FloatAxis));
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickRAxisZ, LOCTEXT("JoystickRAxisZ", "Joystick RAxis Z"), FKeyDetails::FloatAxis));
 
-	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVX, LOCTEXT("JoystickPOVX", "Joystick POV X"), FKeyDetails::FloatAxis));
-	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOVY, LOCTEXT("JoystickPOVY", "Joystick POV Y"), FKeyDetails::FloatAxis));
-	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider, LOCTEXT("JoystickSlider", "Joystick Slider"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV1X, LOCTEXT("JoystickPOV1X", "Joystick POV1 X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV1Y, LOCTEXT("JoystickPOV1Y", "Joystick POV1 Y"), FKeyDetails::FloatAxis));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV2X, LOCTEXT("JoystickPOV2X", "Joystick POV2 X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV2Y, LOCTEXT("JoystickPOV2Y", "Joystick POV2 Y"), FKeyDetails::FloatAxis));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV3X, LOCTEXT("JoystickPOV3X", "Joystick POV3 X"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickPOV3Y, LOCTEXT("JoystickPOV3Y", "Joystick POV3 Y"), FKeyDetails::FloatAxis));
+
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider1, LOCTEXT("JoystickSlider1", "Joystick Slider 1"), FKeyDetails::FloatAxis));
+	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider2, LOCTEXT("JoystickSlider2", "Joystick Slider 2"), FKeyDetails::FloatAxis));
 
 	if (S_OK == InitDirectInput()){
 		UE_LOG(LogClass, Log, TEXT("Direct Input initialized."));
@@ -280,16 +304,17 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 	UJoystickSingleController* current = m_pCollector->currentController;
 	UJoystickSingleController* prev = m_pCollector->prevController;
 
-	// check buttons
+	// check buttons 
 	int bitVal = 0;
-	for (int i = 0; i < 128; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		if (i == 0) bitVal = 1;
 		else bitVal = pow(2, i);
 
-		if (false == ((current->ButtonsPressed & bitVal) == (prev->ButtonsPressed & bitVal))){
+		// Buttons 1 to 32
+		if (false == ((current->ButtonsPressedLow & bitVal) == (prev->ButtonsPressedLow & bitVal))){
 			// button state has changed
-			if (current->ButtonsPressed & bitVal)
+			if (current->ButtonsPressedLow & bitVal)
 			{
 				joystickDelegate->JoystickButtonPressed(i + 1, current);
 				EmitInputMappingButtonPressed(i + 1);
@@ -298,6 +323,21 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 			{
 				joystickDelegate->JoystickButtonReleased(i + 1, current);
 				EmitInputMappingButtonReleased(i + 1);
+			}
+		}
+
+		// Buttons 33 to 128
+		if (false == ((current->ButtonsPressedHigh & bitVal) == (prev->ButtonsPressedHigh& bitVal))){
+			// button state has changed
+			if (current->ButtonsPressedHigh & bitVal)
+			{
+				joystickDelegate->JoystickButtonPressed(i + 33, current);
+				EmitInputMappingButtonPressed(i + 33);
+			}
+			else
+			{
+				joystickDelegate->JoystickButtonReleased(i + 33, current);
+				EmitInputMappingButtonReleased(i + 33);
 			}
 		}
 	}
@@ -320,21 +360,40 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickRAxisZ, 0, current->RAxis.Z);
 	}
 
-	//check pov 1
-	if (current->POV != prev->POV)
+	//check pov
+	if (current->POV0 != prev->POV0)
 	{
-		joystickDelegate->POVChanged(current->POV, current);
+		joystickDelegate->POVChanged(current->POV0, current);
 
 		//Input Mapping, convert to joystick axis
-		FVector2D povAxis = current->POVAxis();
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOVX, 0, povAxis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOVY, 0, povAxis.Y);
+		FVector2D povAxis = current->POVAxis(POV_1);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV1X, 0, povAxis.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV1Y, 0, povAxis.Y);
+	}
+	if (current->POV1 != prev->POV1)
+	{
+		joystickDelegate->POVChanged(current->POV1, current);
+
+		//Input Mapping, convert to joystick axis
+		FVector2D povAxis = current->POVAxis(POV_1);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV2X, 0, povAxis.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV2Y, 0, povAxis.Y);
+	}
+	if (current->POV2 != prev->POV2)
+	{
+		joystickDelegate->POVChanged(current->POV2, current);
+
+		//Input Mapping, convert to joystick axis
+		FVector2D povAxis = current->POVAxis(POV_3);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV3X, 0, povAxis.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV3Y, 0, povAxis.Y);
 	}
 
-	//check slider 1
+	//check slider
 	if (current->Slider != prev->Slider)
 	{
 		joystickDelegate->SliderChanged(current->Slider, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider, 0, current->Slider);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider1, 0, current->Slider.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.Y);
 	}
 }

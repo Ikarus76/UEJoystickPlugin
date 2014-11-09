@@ -479,7 +479,7 @@ namespace {
 		return DIENUM_CONTINUE;
 	}
 
-	/*FORCEINLINE*/ BOOL GetDeviceState(joystickControllerDataUE* pJoyData) {
+	BOOL GetDeviceState(joystickControllerDataUE* pJoyData) {
 
 		DIJOYSTATE2 js;				// DInput joystick state  
 
@@ -508,18 +508,33 @@ namespace {
 		pJoyData->Axis = FVector(js.lX, js.lY, js.lZ);
 		pJoyData->RAxis = FVector(js.lRx, js.lRy, js.lRz);
 
-		pJoyData->POV1 = js.rgdwPOV[0];
-		pJoyData->Slider1 = js.rglSlider[0];
+		pJoyData->POV.X = js.rgdwPOV[0];
+		pJoyData->POV.Y = js.rgdwPOV[1];
+		pJoyData->POV.Z = js.rgdwPOV[2];
 
-		pJoyData->buttonsPressed = 0;
+		pJoyData->Slider.X = js.rglSlider[0];
+		pJoyData->Slider.Y = js.rglSlider[1];
+
+		pJoyData->buttonsPressedL = 0;
 		int bitVal = 0;
-		for (int i = 0; i < 128; i++){
+		for (int i = 0; i < 32; i++){
 			if (js.rgbButtons[i] != 0)
 			{
 				if (i == 0) bitVal = 1;
-				else bitVal = pow(2,i);
+				else bitVal = pow(2, i);
 			}
-			pJoyData->buttonsPressed |= bitVal;
+			pJoyData->buttonsPressedL |= bitVal;
+		}
+
+		pJoyData->buttonsPressedH = 0;
+		bitVal = 0;
+		for (int i = 0; i < 32; i++){
+			if (js.rgbButtons[i+32] != 0)
+			{
+				if (i == 0) bitVal = 1;
+				else bitVal = pow(2, i);
+			}
+			pJoyData->buttonsPressedH |= bitVal;
 		}
 
 		if (hr!=S_OK) {
