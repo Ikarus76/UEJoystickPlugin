@@ -35,6 +35,10 @@ public:
 		prevDataUE = new joystickControllerDataUE;
 		ZeroMemory(prevDataUE, sizeof(joystickControllerDataUE));
 
+		//POV 'zero' state state is 4294967296 which is POV none. We have to re-init this because of ZeroMemory.
+		prevDataUE->POV = FVector(4294967296, 4294967296, 4294967296);
+		currDataUE->POV = FVector(4294967296, 4294967296, 4294967296);
+
 		currentController = NewObject<UJoystickSingleController>(UJoystickSingleController::StaticClass());
 		prevController = NewObject<UJoystickSingleController>(UJoystickSingleController::StaticClass());
 	}
@@ -59,7 +63,7 @@ public:
 //Init and Runtime
 void FJoystickPlugin::StartupModule()
 {
-	UE_LOG(LogClass, Log, TEXT("Attempting to startup Joystick Module."));
+	UE_LOG(JoystickPluginLog, Log, TEXT("Attempting to startup Joystick Module."));
 
 	//Add the keys either way, these should always be available when plugin starts up
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickButton1, LOCTEXT("JoystickButton1", "Joystick Button 1"), FKeyDetails::GamepadKey));
@@ -115,15 +119,17 @@ void FJoystickPlugin::StartupModule()
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider1, LOCTEXT("JoystickSlider1", "Joystick Slider 1"), FKeyDetails::FloatAxis));
 	EKeys::AddKey(FKeyDetails(EKeysJoystick::JoystickSlider2, LOCTEXT("JoystickSlider2", "Joystick Slider 2"), FKeyDetails::FloatAxis));
 
+	//Add our hotplugging listener
+	EnableHotPlugListener();
+
 	if (S_OK == InitDirectInput()){
-		UE_LOG(LogClass, Log, TEXT("Direct Input initialized."));
+		UE_LOG(JoystickPluginLog, Log, TEXT("Direct Input initialized."));
 	}
 	else{
-		UE_LOG(LogClass, Log, TEXT("Direct Input initialization failed."));
+		UE_LOG(JoystickPluginLog, Log, TEXT("Direct Input initialization failed."));
 	}
 
 	m_pCollector = new DataCollector;
-
 }
 
 #undef LOCTEXT_NAMESPACE
@@ -132,6 +138,12 @@ void FJoystickPlugin::ShutdownModule()
 {
 	// TODO:cleanup any joystick function
 	delete m_pCollector;
+
+	//Cleanup forcefeedback
+	if (g_pJoystickFF)
+		CleanupFF();
+
+	CleanupHotPlugging();
 }
 
 
@@ -142,22 +154,37 @@ void FJoystickPlugin::ShutdownModule()
 void FJoystickPlugin::SetDelegate(JoystickDelegate* newDelegate)
 {
 	joystickDelegate = newDelegate;
+
+	//For detecting hot plugs
+	hpDelegate = this;
+
+	//Start case, if we started the plugin with a joystick already plugged in
+	if (JoystickStatePluggedIn)
+		FJoystickPlugin::JoystickPluggedIn();
+}
+
+void FJoystickPlugin::JoystickPluggedIn()
+{
+	joystickDelegate->JoystickPluggedIn();
+}
+void FJoystickPlugin::JoystickUnplugged()
+{
+	joystickDelegate->JoystickUnplugged();
 }
 
 void FJoystickPlugin::JoystickTick(float DeltaTime)
 {
-	//If we don't have a joystick check again maybe one was plugged in
+	//If we don't have a joystick, return, hot plugging listener will change this variable
 	if (!g_pJoystick){
-		if (S_OK != CheckForJoystickPlugin()){
-			return;
-		}
+		return;
 	}
 
 	//get the freshest data
-	joystickControllerDataUE* newJoyData = new joystickControllerDataUE;
-	if(GetDeviceState(newJoyData))
-		m_pCollector->UpdateData(newJoyData);
-	delete newJoyData;
+	joystickControllerDataUE newJoyData;
+	if (GetDeviceState(&newJoyData))
+	{
+		m_pCollector->UpdateData(&newJoyData);
+	}
 
 	//Ticks separately
 	//Call the delegate once it has been set
@@ -166,14 +193,6 @@ void FJoystickPlugin::JoystickTick(float DeltaTime)
 		DelegateTick(DeltaTime);
 	}
 	
-}
-
-
-void FJoystickPlugin::DelegateCheckEnabledCount(bool* plugNotChecked)
-{
-	if (!*plugNotChecked) return;
-
-	*plugNotChecked = false;
 }
 
 void EmitInputMappingButtonPressed(int button)
@@ -228,6 +247,54 @@ void EmitInputMappingButtonPressed(int button)
 		break;
 	case 16:
 		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton16, 0, 0);
+		break;
+	case 17:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton17, 0, 0);
+		break;
+	case 18:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton18, 0, 0);
+		break;
+	case 19:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton19, 0, 0);
+		break;
+	case 20:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton20, 0, 0);
+		break;
+	case 21:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton21, 0, 0);
+		break;
+	case 22:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton22, 0, 0);
+		break;
+	case 23:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton23, 0, 0);
+		break;
+	case 24:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton24, 0, 0);
+		break;
+	case 25:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton25, 0, 0);
+		break;
+	case 26:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton26, 0, 0);
+		break;
+	case 27:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton27, 0, 0);
+		break;
+	case 28:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton28, 0, 0);
+		break;
+	case 29:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton29, 0, 0);
+		break;
+	case 30:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton30, 0, 0);
+		break;
+	case 31:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton31, 0, 0);
+		break;
+	case 32:
+		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton32, 0, 0);
 		break;
 	default:
 		break;
@@ -286,6 +353,54 @@ void EmitInputMappingButtonReleased(int button)
 	case 16:
 		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton16, 0, 0);
 		break;
+	case 17:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton17, 0, 0);
+		break;
+	case 18:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton18, 0, 0);
+		break;
+	case 19:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton19, 0, 0);
+		break;
+	case 20:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton20, 0, 0);
+		break;
+	case 21:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton21, 0, 0);
+		break;
+	case 22:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton22, 0, 0);
+		break;
+	case 23:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton23, 0, 0);
+		break;
+	case 24:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton24, 0, 0);
+		break;
+	case 25:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton25, 0, 0);
+		break;
+	case 26:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton26, 0, 0);
+		break;
+	case 27:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton27, 0, 0);
+		break;
+	case 28:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton28, 0, 0);
+		break;
+	case 29:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton29, 0, 0);
+		break;
+	case 30:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton30, 0, 0);
+		break;
+	case 31:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton31, 0, 0);
+		break;
+	case 32:
+		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton32, 0, 0);
+		break;
 	default:
 		break;
 	}
@@ -294,9 +409,6 @@ void EmitInputMappingButtonReleased(int button)
 /** Internal Tick - Called by the Plugin */
 void FJoystickPlugin::DelegateTick(float DeltaTime)
 {
-
-	//joystickControllerDataUE* pJoyData;
-	bool plugNotChecked = true;
 
 	//Update delegate pointer
 	joystickDelegate->_latestFrame = m_pCollector->currentController;
@@ -351,7 +463,7 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickAxisZ, 0, current->Axis.Z);
 	}
 
-	//check raxis
+	//check rotation axis
 	if (current->RAxis != prev->RAxis)
 	{
 		joystickDelegate->RAxisChanged(current->RAxis, current);
@@ -393,7 +505,24 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 	if (current->Slider != prev->Slider)
 	{
 		joystickDelegate->SliderChanged(current->Slider, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider1, 0, current->Slider.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.X);
 		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.Y);
 	}
+}
+
+void FJoystickPlugin::ForceFeedbackXY(int32 x, int32 y, float magnitudeScale)
+{
+	//initialize if its not initialized
+	/*if (!g_pJoystickFF){
+		InitDirectInputFF();
+	}*/
+
+	if (!g_pJoystickFF){
+		UE_LOG(JoystickPluginLog, Log, TEXT("Force feedback not available."));
+		return;
+	}
+
+	UE_LOG(JoystickPluginLog, Log, TEXT("Attempting FF..."));
+	//scale the input to joystick scaling
+	SetForceFeedbackXY(x, y, magnitudeScale);
 }

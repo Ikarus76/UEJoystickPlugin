@@ -1,24 +1,11 @@
 #include "JoystickPluginPrivatePCH.h"
+#include "IJoystickPlugin.h"
 #include "JoystickDelegate.h"
 #include "JoystickSingleController.h"
 
-#define HALF_RANGE 32768
-#define JOYSTICK_SCALING_FACTOR 65536
-#define INVERSE_SCALING_FACTOR 0.00001525878	//this is 1/65536
-
 UJoystickSingleController::UJoystickSingleController(const FPostConstructInitializeProperties &init) : UObject(init)
 {
-
-}
-
-FVector normalizeAxis(FVector in)
-{
-	return ((in - HALF_RANGE)) / HALF_RANGE;
-}
-
-FVector2D normalizeSlider(FVector2D value)
-{
-	return (value - HALF_RANGE) / HALF_RANGE;
+	Reset();
 }
 
 JoystickPOVDirection povValToDirection(float value)
@@ -34,7 +21,7 @@ JoystickPOVDirection povValToDirection(float value)
 	case 27000:	return DIRECTION_LEFT;
 	case 31500:	return DIRECTION_UP_LEFT;
 	default:
-		UE_LOG(LogTemp, Warning, TEXT("Warning, POV unhandled case. %d"), (int32)value);
+		//UE_LOG(LogTemp, Warning, TEXT("Warning, POV unhandled case. %d"), (int32)value);
 		return DIRECTION_NONE;
 	}
 }
@@ -45,8 +32,8 @@ void UJoystickSingleController::setFromJoystickDataUE(joystickControllerDataUE* 
 	this->ButtonsPressedLow = data->buttonsPressedL;
 	this->ButtonsPressedHigh = data->buttonsPressedH;
 
-	this->Axis = normalizeAxis(data->Axis);
-	this->RAxis = normalizeAxis(data->RAxis); 
+	this->Axis = JoystickUtilityNormalizeAxis(data->Axis);
+	this->RAxis = JoystickUtilityNormalizeAxis(data->RAxis);
 	
 	//this->POV1 = data->POV1;
 
@@ -54,7 +41,7 @@ void UJoystickSingleController::setFromJoystickDataUE(joystickControllerDataUE* 
 	this->POV1 = povValToDirection(data->POV.Y);
 	this->POV2 = povValToDirection(data->POV.Z);
 
-	this->Slider = normalizeSlider(data->Slider);
+	this->Slider = JoystickUtilityNormalizeSlider(data->Slider);
 
 	this->IsValid = true;
 }
@@ -111,6 +98,16 @@ FVector2D UJoystickSingleController::POVAxis(POVIndex Index)
 		break;
 	}
 }
+
+/*void UJoystickSingleController::ForceFeedback(float x, float y, float scale)
+{
+	//Get the plugin singleton and forward the force feedback
+	if (IJoystickPlugin::IsAvailable())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Denormalized values: %d, %d"), JoystickUtilityDeNormalizeForceValue(x), JoystickUtilityDeNormalizeForceValue(y));
+		IJoystickPlugin::Get().ForceFeedbackXY(JoystickUtilityDeNormalizeForceValue(x), JoystickUtilityDeNormalizeForceValue(y), scale);
+	}
+}*/
 
 void UJoystickSingleController::Reset()
 {

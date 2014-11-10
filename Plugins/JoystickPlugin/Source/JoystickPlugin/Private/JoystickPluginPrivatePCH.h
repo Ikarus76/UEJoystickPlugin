@@ -5,4 +5,5 @@
 
 #include "Engine.h"
 #include "CoreUObject.h"
+#include "JoystickUtility.h"
 
