@@ -2,22 +2,6 @@
 
 #include "JoystickInterface.h"
 
-/*UENUM(BlueprintType)
-enum JoystickButtons
-{
-	JOY_BUTTON_1 = 1,
-	JOY_BUTTON_2 = 2,
-	JOY_BUTTON_3 = 4,
-	JOY_BUTTON_4 = 8,
-	JOY_BUTTON_5 = 16,
-	JOY_BUTTON_6 = 32,
-	JOY_BUTTON_7 = 64,
-	JOY_BUTTON_8 = 128
-};*/
-
-
-
-
 //Input Mapping Keys
 struct EKeysJoystick
 {
@@ -82,7 +66,7 @@ struct  joystickControllerDataUE{
 	int64 buttonsPressedH;
 	FVector Axis;
 	FVector RAxis;
-	FVector POV;
+	FVector POV = FVector(4294967296, 4294967296, 4294967296);
 	FVector2D Slider;
 	bool enabled;
 };
@@ -98,6 +82,10 @@ public:
 	virtual void RAxisChanged(FVector vector, class UJoystickSingleController* frame);
 	virtual void POVChanged(JoystickPOVDirection Value, class UJoystickSingleController* frame);
 	virtual void SliderChanged(FVector2D Value, class UJoystickSingleController* frame);
+
+	//JoystickHotPlugInterface events
+	virtual void JoystickPluggedIn();
+	virtual void JoystickUnplugged();
 
 	virtual bool JoystickIsAvailable();
 

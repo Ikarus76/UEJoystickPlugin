@@ -17,6 +17,8 @@
 #pragma comment(lib, "dxguid.lib")
 
 #include <windows.h> 
+#include <dbt.h>
+#include <sstream>
 #include <stdio.h> 
 #include <tchar.h> 
 #include <commctrl.h> 
@@ -36,6 +38,8 @@
 #include "FJoystickDevice.h"
 
 namespace {
+#define SAFE_DELETE(p)  { if(p) { delete (p);     (p)=nullptr; } }
+#define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=nullptr; } }
 
 	struct XINPUT_DEVICE_NODE {
 		DWORD dwVidPid;
@@ -45,6 +49,22 @@ namespace {
 	XINPUT_DEVICE_NODE*     g_pXInputDeviceList = nullptr;
 	LPDIRECTINPUT8          g_pDI = nullptr;
 	LPDIRECTINPUTDEVICE8    g_pJoystick = nullptr;
+	bool JoystickFound = false;
+
+	//FF
+	HWND					g_hWndFF;
+	LPDIRECTINPUT8          g_pDIFF = nullptr;
+	LPDIRECTINPUTDEVICE8    g_pJoystickFF = nullptr;
+	LPDIRECTINPUTEFFECT     g_pEffect = nullptr;
+	DWORD                   g_dwNumForceFeedbackAxis = 0;
+	INT                     g_nXForce;
+	INT                     g_nYForce;
+	bool JoystickFFFound = false;
+
+	//Hot Plugging, dummy window
+	JoystickHotPlugInterface* hpDelegate;
+	bool JoystickStatePluggedIn = false;
+	HWND HPWindow;
 	
 	struct DI_ENUM_CONTEXT
 	{
@@ -54,32 +74,6 @@ namespace {
 
 	DI_ENUM_CONTEXT enumContext;
 
-
-	/*
-	struct FJoystickManager {
-		XINPUT_DEVICE_NODE*     pXInputDeviceList = nullptr;
-		LPDIRECTINPUT8          pDI = nullptr;
-		LPDIRECTINPUTJOYCONFIG8 pJoyConfig = nullptr;
-		DIJOYCONFIG				PreferredJoyCfg;
-		bool					bFilterOutXinputDevices = false;
-
-		struct {
-			DIJOYCONFIG* pPreferredJoyCfg;
-			bool bPreferredJoyCfgValid;
-		} enumContext;
-	};
-
-	struct FJoystickHandler {
-		FJoystickManager *Manager;
-		FJoystickDeviceInfo &DeviceInfo;
-
-		FORCEINLINE FJoystickHandler(FJoystickManager *InManager, FJoystickDeviceInfo &InDeviceInfo) :
-			Manager(InManager),
-			DeviceInfo(InDeviceInfo)
-		{}
-	};
-	*/
-
 	// forward declarations
 	HRESULT SetupForIsXInputDevice();
 	BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext);
@@ -87,6 +81,448 @@ namespace {
 	BOOL CALLBACK EnumObjectsCallback(const DIDEVICEOBJECTINSTANCE* pdidoi, VOID* pContext);
 	///////////////////////////
 
+	/**
+	* Utility
+	*/
+
+	BOOL is_main_window(HWND handle)
+	{
+		return GetWindow(handle, GW_OWNER) == (HWND)0 && IsWindowVisible(handle);
+	}
+
+	struct handle_data {
+		unsigned long process_id;
+		HWND best_handle;
+	};
+
+	BOOL CALLBACK enum_windows_callback(HWND handle, LPARAM lParam)
+	{
+		handle_data& data = *(handle_data*)lParam;
+		unsigned long process_id = 0;
+		GetWindowThreadProcessId(handle, &process_id);
+		if (data.process_id != process_id || !is_main_window(handle)) {
+			return TRUE;
+		}
+		data.best_handle = handle;
+		return FALSE;
+	}
+
+	HWND find_main_window(unsigned long process_id)
+	{
+		handle_data data;
+		data.process_id = process_id;
+		data.best_handle = 0;
+		EnumWindows(enum_windows_callback, (LPARAM)&data);
+		return data.best_handle;
+	}
+
+	//Convenience
+	HWND getProcessWindow(){
+		DWORD processId = GetCurrentProcessId();
+		return find_main_window(processId);
+	}
+
+	//Utility function used to debug address allocation
+	void UtilityDebugAddress(void* pointer)
+	{
+		const void * address = static_cast<const void*>(pointer);
+		std::stringstream ss;
+		ss << address;
+		std::string name = ss.str();
+		FString string(name.c_str());
+
+		UE_LOG(JoystickPluginLog, Log, TEXT("Address: %s"), *string);
+	}
+
+	/**
+	*	Joystick Force Feedback
+	*/
+
+	BOOL CALLBACK EnumFFDevicesCallback(const DIDEVICEINSTANCE* pInst,
+		VOID* pContext)
+	{
+		LPDIRECTINPUTDEVICE8 pDevice;
+		HRESULT hr;
+
+		// Obtain an interface to the enumerated force feedback device.
+		hr = g_pDI->CreateDevice(pInst->guidInstance, &pDevice, nullptr);
+
+		// If it failed, then we can't use this device for some
+		// bizarre reason.  (Maybe the user unplugged it while we
+		// were in the middle of enumerating it.)  So continue enumerating
+		if (FAILED(hr))
+			return DIENUM_CONTINUE;
+
+		// We successfully created an IDirectInputDevice8.  So stop looking 
+		// for another one.
+		g_pJoystick = pDevice;
+
+		JoystickFFFound = true;
+
+		return DIENUM_STOP;
+	}
+
+	BOOL CALLBACK EnumAxesCallback(const DIDEVICEOBJECTINSTANCE* pdidoi,
+		VOID* pContext)
+	{
+		auto pdwNumForceFeedbackAxis = reinterpret_cast<DWORD*>(pContext);
+
+		if ((pdidoi->dwFlags & DIDOI_FFACTUATOR) != 0)
+			(*pdwNumForceFeedbackAxis)++;
+
+		return DIENUM_CONTINUE;
+	}
+
+	void CleanupFF()
+	{
+		if (g_pJoystickFF)
+			g_pJoystickFF->Unacquire();
+
+		// Release any DirectInput objects.
+		SAFE_RELEASE(g_pEffect);
+		SAFE_RELEASE(g_pJoystickFF);
+		SAFE_RELEASE(g_pDIFF);
+	}
+
+	HRESULT InitDirectInputFF()
+	{
+		UE_LOG(JoystickPluginLog, Warning, TEXT("Initializing force feedback bind."));
+
+		DIPROPDWORD dipdw;
+		HRESULT hr;
+
+		if (!g_pJoystickFF)
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: No FF device found."));
+			return S_OK;
+		}
+
+		// This tells DirectInput that we will be passing a DIJOYSTATE structure to
+		// IDirectInputDevice8::GetDeviceState(). Even though we won't actually do
+		// it in this sample. But setting the data format is important so that the
+		// DIJOFS_* values work properly.
+		if (FAILED(hr = g_pJoystickFF->SetDataFormat(&c_dfDIJoystick)))
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Set Data Format failed."));
+			return hr;
+		}
+
+		g_hWndFF = GetForegroundWindow();
+		//g_hWndFF = HPWindow;
+
+		int length = ::GetWindowTextLength(g_hWndFF);
+		TCHAR* buffer;
+		buffer = new TCHAR[length + 1];
+		memset(buffer, 0, (length + 1) * sizeof(TCHAR));
+
+		GetWindowText(g_hWndFF, buffer, length + 1);
+
+		FString returnText = FString(length, buffer);
+
+		UE_LOG(JoystickPluginLog, Log, TEXT("Foreground window name: %s"), *returnText);
+
+		// Set the cooperative level to let DInput know how this device should
+		// interact with the system and with other DInput applications.
+		// Exclusive access is required in order to perform force feedback.
+		if (FAILED(hr = g_pJoystickFF->SetCooperativeLevel(g_hWndFF,
+			DISCL_EXCLUSIVE |
+			DISCL_BACKGROUND)))
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Set Cooperative Level failed."));
+			return hr;
+		}
+
+		// Since we will be playing force feedback effects, we should disable the
+		// auto-centering spring.
+		dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+		dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+		dipdw.diph.dwObj = 0;
+		dipdw.diph.dwHow = DIPH_DEVICE;
+		dipdw.dwData = FALSE;
+
+		if (FAILED(hr = g_pJoystickFF->SetProperty(DIPROP_AUTOCENTER, &dipdw.diph)))
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Set Auto-center Property failed."));
+			return hr;
+		}
+
+		// Enumerate and count the axes of the joystick 
+		if (FAILED(hr = g_pJoystickFF->EnumObjects(EnumAxesCallback,
+			(VOID*)&g_dwNumForceFeedbackAxis, DIDFT_AXIS)))
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Enum ForceFeedback axis failed."));
+			return hr;
+		}
+
+		//g_pJoystick = g_pJoystickFF;
+
+		// This simple sample only supports one or two axis joysticks
+		if (g_dwNumForceFeedbackAxis > 2)
+			g_dwNumForceFeedbackAxis = 2;
+
+		// This application needs only one effect: Applying raw forces.
+		DWORD rgdwAxes[2] = { DIJOFS_X, DIJOFS_Y };
+		LONG rglDirection[2] = { 0, 0 };
+		DICONSTANTFORCE cf = { 0 };
+
+		DIEFFECT eff;
+		ZeroMemory(&eff, sizeof(eff));
+		eff.dwSize = sizeof(DIEFFECT);
+		eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+		eff.dwDuration = INFINITE;
+		eff.dwSamplePeriod = 0;
+		eff.dwGain = DI_FFNOMINALMAX;
+		eff.dwTriggerButton = DIEB_NOTRIGGER;
+		eff.dwTriggerRepeatInterval = 0;
+		eff.cAxes = g_dwNumForceFeedbackAxis;
+		eff.rgdwAxes = rgdwAxes;
+		eff.rglDirection = rglDirection;
+		eff.lpEnvelope = 0;
+		eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+		eff.lpvTypeSpecificParams = &cf;
+		eff.dwStartDelay = 0;
+
+		// Create the prepared effect
+		if (FAILED(hr = g_pJoystickFF->CreateEffect(GUID_ConstantForce,
+			&eff, &g_pEffect, nullptr)))
+		{
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Create Effect failed."));
+			return hr;
+		}
+
+		if (!g_pEffect){
+			UE_LOG(JoystickPluginLog, Warning, TEXT("DirectInput ForceFeedback Warning: Effect acquisition failed."));
+			return E_FAIL;
+		}
+
+		if (g_pJoystickFF && g_hWndFF != nullptr){
+			//g_pJoystickFF->Acquire();
+			//if (g_pEffect)
+				//g_pEffect->Start(1, 0);
+		}
+
+		UE_LOG(JoystickPluginLog, Log, TEXT("ForceFeedback Device found and initialized."));
+		return S_OK;
+	}
+
+	HRESULT SetForceFeedbackXY(INT directionX, INT directionY, float magnitude)
+	{
+		//Shortcut it
+		if (!g_pJoystickFF || !g_pEffect){
+			UtilityDebugAddress(g_pJoystickFF);
+			UtilityDebugAddress(g_pEffect);
+			UE_LOG(JoystickPluginLog, Log, TEXT("No FF joystick or Effect, returning."));
+			return S_OK;
+		}
+
+		g_nXForce = directionX * magnitude;
+		g_nYForce = directionY * magnitude;
+
+		// Modifying an effect is basically the same as creating a new one, except
+		// you need only specify the parameters you are modifying
+		LONG rglDirection[2] = { 0, 0 };
+
+		DICONSTANTFORCE cf;
+
+		if (g_dwNumForceFeedbackAxis == 1)
+		{
+			// If only one force feedback axis, then apply only one direction and 
+			// keep the direction at zero
+			cf.lMagnitude = g_nXForce;
+			rglDirection[0] = 0;
+		}
+		else
+		{
+			// If two force feedback axis, then apply magnitude from both directions 
+			rglDirection[0] = g_nXForce;
+			rglDirection[1] = g_nYForce;
+			cf.lMagnitude = (DWORD)sqrt((double)g_nXForce * (double)g_nXForce +
+				(double)g_nYForce * (double)g_nYForce);
+		}
+
+		//Debug override
+		rglDirection[0] = 0;
+		rglDirection[1] = 0;
+		//cf.lMagnitude = (DWORD)7000;
+		cf.lMagnitude = DI_FFNOMINALMAX;
+
+		DIEFFECT eff;
+		ZeroMemory(&eff, sizeof(eff));
+		eff.dwSize = sizeof(DIEFFECT);
+		eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+		eff.cAxes = g_dwNumForceFeedbackAxis;
+		eff.rglDirection = rglDirection;
+		eff.lpEnvelope = 0;
+		eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+		eff.lpvTypeSpecificParams = &cf;
+		eff.dwStartDelay = 0;
+
+		UtilityDebugAddress(g_pEffect);
+
+		// Now set the new parameters and start the effect immediately.
+		if (FAILED(g_pEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS | DIEP_START)))
+		{
+			UE_LOG(JoystickPluginLog, Log, TEXT("Failed setting effects parameters!"));
+		}
+
+		UE_LOG(JoystickPluginLog, Log, TEXT("Force should be felt by now."));
+
+		return S_OK;
+	}
+
+	/**
+	*	HOT PLUGGING
+	*/
+	void CleanupHotPlugging()
+	{
+		DestroyWindow(HPWindow);
+	}
+
+	HRESULT CheckForJoystickPlugin()
+	{
+		HRESULT hr;
+
+		//Release any references to the current joystick so we can pick up a different joystick if need be
+		SAFE_RELEASE(g_pJoystick);
+		//if (g_pJoystickFF)
+		//	CleanupFF();
+
+		JoystickFound = JoystickFFFound = false;
+		//try finding a FF joystick - this works, but it causes a crash downstream on a ff device sadly. Commented out for now, can be removed if deemed appropriate
+		/*if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
+			EnumFFDevicesCallback, nullptr,
+			DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK)))
+		{
+			UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick FF Enumerate Devices found."));
+			return hr;
+		}
+
+		if (JoystickFFFound){
+			UE_LOG(JoystickPluginLog, Log, TEXT("FF Device found, starting FF specific init..."));
+			JoystickFound = JoystickFFFound;
+			g_pJoystickFF = g_pJoystick;
+			InitDirectInputFF();
+		}
+		else{
+		*/	UE_LOG(JoystickPluginLog, Log, TEXT("No FF Device found, grabbing regular joystick."));
+
+			// Look for a simple joystick we can use for this sample program.
+			if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
+				EnumJoysticksCallback,
+				&enumContext, DIEDFL_ATTACHEDONLY)))
+			{
+				UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick Enumerate Devices found."));
+				return hr;
+			}
+		//}
+
+		CleanupForIsXInputDevice();
+
+		// Make sure we got a joystick
+		if (!g_pJoystick)
+		{
+			if (!JoystickFound && JoystickStatePluggedIn)
+			{
+				if (hpDelegate)
+					hpDelegate->JoystickUnplugged();
+				JoystickStatePluggedIn = false;
+			}
+			UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick Device found."));
+			return S_FALSE;
+		}
+
+		// Set the data format to "simple joystick" - a predefined data format 
+		//
+		// A data format specifies which controls on a device we are interested in,
+		// and how they should be reported. This tells DInput that we will be
+		// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
+		if (FAILED(hr = g_pJoystick->SetDataFormat(&c_dfDIJoystick2)))
+			return hr;
+
+
+		// Enumerate the joystick objects. The callback function enabled user
+		// interface elements for objects that are found, and sets the min/max
+		// values property for discovered axes.
+		if (FAILED(hr = g_pJoystick->EnumObjects(EnumObjectsCallback,
+			NULL/*enum param!*/, DIDFT_ALL)))
+			return hr;
+
+		//Debug
+		UE_LOG(JoystickPluginLog, Log, TEXT("Hot Plug Joystick detected: %d state: %d"), JoystickFound, JoystickStatePluggedIn);
+		
+		//Detect
+		if (JoystickFound && !JoystickStatePluggedIn)
+		{
+			if (hpDelegate)
+				hpDelegate->JoystickPluggedIn();
+			JoystickStatePluggedIn = true;
+		}
+
+		//Acquire the joystick
+		return g_pJoystick->Acquire();
+
+		//return S_OK;
+	}
+
+	INT_PTR WINAPI WinProcCallback(
+		HWND hWnd,
+		UINT message,
+		WPARAM wParam,
+		LPARAM lParam)
+	{
+		switch (message){
+
+		case WM_DEVICECHANGE:
+			CheckForJoystickPlugin();
+			break;
+		default:
+			break;
+		}
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	void EnableHotPlugListener()
+	{
+		//Make a dummy window, this is the only way I know to register for window events (successfully listening to WM_DEVICECHANGE messages)
+		LPTSTR HPClassName = TEXT("HPClass");
+		WNDCLASS HPClass;
+		HWND HPWindow;
+
+		HPClass.style = CS_VREDRAW;
+		HPClass.lpfnWndProc = &WinProcCallback;
+		HPClass.cbClsExtra = 0;
+		HPClass.cbWndExtra = 0;
+		HPClass.hInstance = hInstance;
+		HPClass.hIcon = NULL;
+		HPClass.hCursor = NULL;
+		HPClass.hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1);
+		HPClass.lpszMenuName = NULL;
+		HPClass.lpszClassName = HPClassName;
+		if (!RegisterClass(&HPClass)) return;
+
+		HPWindow = CreateWindow(HPClassName, NULL, WS_MINIMIZE, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+
+		if (HPWindow == NULL) return;
+
+		DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
+		ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
+
+		NotificationFilter.dbcc_size = sizeof(NotificationFilter);
+		NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+		NotificationFilter.dbcc_reserved = 0;
+
+		NotificationFilter.dbcc_classguid = { 0x25dbce51, 0x6c8f, 0x4a72,
+			0x8a, 0x6d, 0xb5, 0x4c, 0x2b, 0x4f, 0xc8, 0x35 };
+
+		HDEVNOTIFY hDevNotify = RegisterDeviceNotification(NULL, &NotificationFilter, DEVICE_NOTIFY_SERVICE_HANDLE);
+
+		UE_LOG(JoystickPluginLog, Log, TEXT("Registered for hot plugging."));
+	}
+
+	/**
+	*	Joystick - Basics
+	*/
 
 	HRESULT InitDirectInput()
 	{
@@ -98,12 +534,7 @@ namespace {
 		if (FAILED(hr = DirectInput8Create(GetModuleHandle(nullptr), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&g_pDI, nullptr)))
 			return hr;
 
-
-		//if (g_bFilterOutXinputDevices)
-			SetupForIsXInputDevice();
-
 		DIJOYCONFIG PreferredJoyCfg = { 0 };
-		//DI_ENUM_CONTEXT enumContext;
 		enumContext.pPreferredJoyCfg = &PreferredJoyCfg;
 		enumContext.bPreferredJoyCfgValid = false;
 
@@ -116,90 +547,17 @@ namespace {
 			enumContext.bPreferredJoyCfgValid = true;
 		SAFE_RELEASE(pJoyConfig);
 
-		// Look for a simple joystick we can use for this sample program.
-		if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
-			EnumJoysticksCallback,
-			&enumContext, DIEDFL_ATTACHEDONLY)))
-			return hr;
+		CheckForJoystickPlugin();
 
-		//if (g_bFilterOutXinputDevices)
-			CleanupForIsXInputDevice();
-
-		// Make sure we got a joystick
-		if (!g_pJoystick)
+		if (JoystickFound)
 		{
-			return S_FALSE;
+			UE_LOG(JoystickPluginLog, Log, TEXT("Joystick found plugged in."));
+			JoystickStatePluggedIn = true;
 		}
 
-		// Set the data format to "simple joystick" - a predefined data format 
-		//
-		// A data format specifies which controls on a device we are interested in,
-		// and how they should be reported. This tells DInput that we will be
-		// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
-		if (FAILED(hr = g_pJoystick->SetDataFormat(&c_dfDIJoystick2)))
-			return hr;
-
-		/*
-		// Set the cooperative level to let DInput know how this device should
-		// interact with the system and with other DInput applications.
-		if (FAILED(hr = g_pJoystick->SetCooperativeLevel(hDlg, DISCL_EXCLUSIVE |
-			DISCL_FOREGROUND)))
-			return hr;*/
-
-		// Enumerate the joystick objects. The callback function enabled user
-		// interface elements for objects that are found, and sets the min/max
-		// values property for discovered axes.
-		if (FAILED(hr = g_pJoystick->EnumObjects(EnumObjectsCallback,
-			NULL/*enum param!*/, DIDFT_ALL)))
-			return hr;
-
+		UE_LOG(JoystickPluginLog, Log, TEXT("Joystick Init success."));
 		return S_OK;
 	}
-
-	FORCEINLINE HRESULT CheckForJoystickPlugin()
-	{
-		HRESULT hr;
-
-		// Look for a simple joystick we can use for this sample program.
-		if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
-			EnumJoysticksCallback,
-			&enumContext, DIEDFL_ATTACHEDONLY)))
-			return hr;
-
-		//if (g_bFilterOutXinputDevices)
-		CleanupForIsXInputDevice();
-
-		// Make sure we got a joystick
-		if (!g_pJoystick)
-		{
-			return S_FALSE;
-		}
-
-		// Set the data format to "simple joystick" - a predefined data format 
-		//
-		// A data format specifies which controls on a device we are interested in,
-		// and how they should be reported. This tells DInput that we will be
-		// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
-		if (FAILED(hr = g_pJoystick->SetDataFormat(&c_dfDIJoystick2)))
-			return hr;
-
-		/*
-		// Set the cooperative level to let DInput know how this device should
-		// interact with the system and with other DInput applications.
-		if (FAILED(hr = g_pJoystick->SetCooperativeLevel(hDlg, DISCL_EXCLUSIVE |
-		DISCL_FOREGROUND)))
-		return hr;*/
-
-		// Enumerate the joystick objects. The callback function enabled user
-		// interface elements for objects that are found, and sets the min/max
-		// values property for discovered axes.
-		if (FAILED(hr = g_pJoystick->EnumObjects(EnumObjectsCallback,
-			NULL/*enum param!*/, DIDFT_ALL)))
-			return hr;
-
-		return S_OK;
-	}
-
 
 	/**
 	* Enum each PNP device using WMI and check each device ID to see if it contains "IG_" (ex. "VID_045E&PID_028E&IG_00").
@@ -380,6 +738,8 @@ namespace {
 
 		// Stop enumeration. Note: we're just taking the first joystick we get. You
 		// could store all the enumerated joysticks and let the user pick.
+		JoystickFound = true;
+
 		return DIENUM_STOP;
 	}
 

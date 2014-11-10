@@ -39,6 +39,7 @@ public:
 	 * Public API, implemented in FHydraPlugin.cpp
 	 * Required API called by HydraDelegate via HydraStartup() and HydraTick(float);
 	 */
+	virtual void ForceFeedbackXY(int32 x, int32 y, float magnitudeScale) {};
 	virtual void JoystickTick(float DeltaTime) {};
 	virtual void SetDelegate(JoystickDelegate* newDelegate) {};
 };
