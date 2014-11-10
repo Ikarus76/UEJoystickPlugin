@@ -55,5 +55,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
 	void JoystickSliderChanged(FVector2D SliderValue, class UJoystickSingleController* controller);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
+	void JoystickPluggedIn();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
+	void JoystickUnplugged();
+
 	virtual FString ToString();
 };

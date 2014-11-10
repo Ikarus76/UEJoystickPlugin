@@ -3,7 +3,7 @@
 	
 	"FriendlyName" : "Joystick Plugin",
 	"Version" : 3,
-	"VersionName" : "0.2.1",
+	"VersionName" : "0.2.3",
 	"CreatedBy" : "Ikarus76",
 	"CreatedByURL" : "http://sambabyte.net",
 	"EngineVersion" : "4.5.0",
@@ -14,7 +14,8 @@
 	[
 		{
 			"Name" : "JoystickPlugin",
-			"Type" : "Runtime"
+			"Type" : "Runtime",
+			"WhitelistPlatforms" : [ "Win64", "Win32" ]
 		}
 	]
 }

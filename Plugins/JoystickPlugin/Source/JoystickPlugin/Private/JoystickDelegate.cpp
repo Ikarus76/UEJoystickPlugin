@@ -95,6 +95,17 @@ void JoystickDelegate::SliderChanged(FVector2D SliderValue, UJoystickSingleContr
 		IJoystickInterface::Execute_JoystickSliderChanged(_interfaceDelegate, SliderValue, controller);
 }
 
+void JoystickDelegate::JoystickPluggedIn()
+{
+	if (implementsInterface())
+		IJoystickInterface::Execute_JoystickPluggedIn(_interfaceDelegate);
+}
+void JoystickDelegate::JoystickUnplugged()
+{
+	if (implementsInterface())
+		IJoystickInterface::Execute_JoystickUnplugged(_interfaceDelegate);
+}
+
 bool JoystickDelegate::implementsInterface()
 {
 	return (_interfaceDelegate != NULL && _interfaceDelegate->GetClass()->ImplementsInterface(UJoystickInterface::StaticClass()));
@@ -103,7 +114,7 @@ bool JoystickDelegate::implementsInterface()
 //Setting
 void JoystickDelegate::SetInterfaceDelegate(UObject* newDelegate)
 {
-	UE_LOG(LogClass, Log, TEXT("InterfaceDelegate passed: %s"), *newDelegate->GetName());
+	UE_LOG(JoystickPluginLog, Log, TEXT("InterfaceDelegate passed: %s"), *newDelegate->GetName());
 
 	//Use this format to support both blueprint and C++ form
 	if (newDelegate->GetClass()->ImplementsInterface(UJoystickInterface::StaticClass()))
@@ -121,11 +132,11 @@ void JoystickDelegate::SetInterfaceDelegate(UObject* newDelegate)
 		{
 			//If you're crashing its probably because of this setting causing an assert failure
 			_interfaceDelegate = NULL;
-			UE_LOG(LogClass, Log, TEXT("JoystickBlueprintDelegate Warning: JoystickInterface delegate is NULL, did your class implement JoystickInterface? Events are disabled."));
+			UE_LOG(JoystickPluginLog, Log, TEXT("JoystickBlueprintDelegate Warning: JoystickInterface delegate is NULL, did your class implement JoystickInterface? Events are disabled."));
 		}
 
 		//Either way post a warning, this will be a common error
-		UE_LOG(LogClass, Log, TEXT("JoystickBlueprintDelegate Warning: JoystickInterface Delegate is NOT set, did your class implement JoystickInterface? Events are disabled."));
+		UE_LOG(JoystickPluginLog, Log, TEXT("JoystickBlueprintDelegate Warning: JoystickInterface Delegate is NOT set, did your class implement JoystickInterface? Events are disabled."));
 		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("JoystickBlueprintDelegate Warning: Delegate is NOT set, did your class implement JoystickInterface? Events are disabled."));
 	}
 }

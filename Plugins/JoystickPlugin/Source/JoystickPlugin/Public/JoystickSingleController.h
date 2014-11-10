@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Joystick Frame")
 	FVector2D POVAxis(POVIndex Index);
 
+	//Call on FF devices to emit force feedback, will do nothing if your device doesn't support FF
+	//UFUNCTION(BlueprintCallable, Category = "Joystick Frame")
+	//void ForceFeedback(float x, float y, float scale = 1.f);
+
 	void Reset();
 	void setFromJoystickDataUE(joystickControllerDataUE* data);
 };
