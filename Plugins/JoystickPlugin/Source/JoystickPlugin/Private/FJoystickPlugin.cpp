@@ -505,24 +505,21 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 	if (current->Slider != prev->Slider)
 	{
 		joystickDelegate->SliderChanged(current->Slider, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.X);
+		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider1, 0, current->Slider.X);
 		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.Y);
 	}
 }
 
 void FJoystickPlugin::ForceFeedbackXY(int32 x, int32 y, float magnitudeScale)
 {
-	//initialize if its not initialized
-	/*if (!g_pJoystickFF){
-		InitDirectInputFF();
-	}*/
+	UE_LOG(JoystickPluginLog, Log, TEXT("Force feedback currently not implemented correctly, aborting."));
+	return;
 
 	if (!g_pJoystickFF){
 		UE_LOG(JoystickPluginLog, Log, TEXT("Force feedback not available."));
 		return;
 	}
 
-	UE_LOG(JoystickPluginLog, Log, TEXT("Attempting FF..."));
 	//scale the input to joystick scaling
 	SetForceFeedbackXY(x, y, magnitudeScale);
 }
