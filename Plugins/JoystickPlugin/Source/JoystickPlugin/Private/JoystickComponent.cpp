@@ -6,7 +6,7 @@
 #include "CoreUObject.h"
 
 
-UJoystickComponent::UJoystickComponent(const FPostConstructInitializeProperties &init) : UActorComponent(init)
+UJoystickComponent::UJoystickComponent(const FObjectInitializer &init) : UActorComponent(init)
 {
 	bWantsInitializeComponent = true;
 	bAutoActivate = true;

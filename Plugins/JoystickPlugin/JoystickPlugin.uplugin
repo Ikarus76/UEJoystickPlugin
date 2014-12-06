@@ -2,8 +2,8 @@
     "FileVersion" : 3,
 	
 	"FriendlyName" : "Joystick Plugin",
-	"Version" : 3,
-	"VersionName" : "0.2.3",
+	"Version" : 4,
+	"VersionName" : "0.2.4",
 	"CreatedBy" : "Ikarus76",
 	"CreatedByURL" : "http://sambabyte.net",
 	"EngineVersion" : "4.5.0",
