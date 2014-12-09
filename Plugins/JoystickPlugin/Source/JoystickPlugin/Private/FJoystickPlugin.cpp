@@ -17,7 +17,6 @@
 IMPLEMENT_MODULE(FJoystickPlugin, JoystickPlugin)
 
 #define LOCTEXT_NAMESPACE "JoystickPlugin"
-#pragma warning( disable:4273 )
 
 //Collector class contains all the data captured from .dll and delegate data will point to this structure (allDataUE and historicalDataUE).
 class DataCollector
@@ -213,20 +212,6 @@ bool EmitAnalogInputEventForKey(FKey key, float value, int32 user, bool repeat)
 	FAnalogInputEvent AnalogInputEvent(key, FSlateApplication::Get().GetModifierKeys(), user, repeat, 0, 0, value);
 	return FSlateApplication::Get().ProcessAnalogInputEvent(AnalogInputEvent);
 }
-
-FText FAnalogInputEvent::ToText() const
-{
-	return NSLOCTEXT("Joystick Plugin Events", "Analog", "Text");
-}
-FText FInputEvent::ToText() const
-{
-	return NSLOCTEXT("Joystick Plugin Events", "Input", "Text");
-}
-FText FKeyEvent::ToText() const
-{
-	return NSLOCTEXT("Joystick Plugin Events", "Key", "Text");
-}
-
 
 FKey keyForButtonIndex(int button)
 {

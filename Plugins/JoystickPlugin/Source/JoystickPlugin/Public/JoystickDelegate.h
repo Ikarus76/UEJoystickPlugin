@@ -2,11 +2,6 @@
 
 #include "JoystickInterface.h"
 
-//yay 4.6 breaks input mapping!
-/*namespace EControllerButtons
-{
-	enum Type
-}*/
 //Input Mapping Keys
 struct EKeysJoystick
 {
