@@ -5,7 +5,7 @@
 #include "JoystickPlayerController.h"
 
 //Constructor/Initializer
-AJoystickPlayerController::AJoystickPlayerController(const class FPostConstructInitializeProperties& PCIP)
+AJoystickPlayerController::AJoystickPlayerController(const class FObjectInitializer& PCIP)
 	: Super(PCIP)
 {
 	PrimaryActorTick.bCanEverTick = true;

@@ -3,7 +3,7 @@
 #include "JoystickDelegate.h"
 #include "JoystickSingleController.h"
 
-UJoystickSingleController::UJoystickSingleController(const FPostConstructInitializeProperties &init) : UObject(init)
+UJoystickSingleController::UJoystickSingleController(const FObjectInitializer &init) : UObject(init)
 {
 	Reset();
 }

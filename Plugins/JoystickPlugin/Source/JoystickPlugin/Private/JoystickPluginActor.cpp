@@ -6,7 +6,7 @@
 #include "JoystickPluginActor.h"
 
 //Constructor/Initializer
-AJoystickPluginActor::AJoystickPluginActor(const FPostConstructInitializeProperties& PCIP)
+AJoystickPluginActor::AJoystickPluginActor(const FObjectInitializer& PCIP)
 : Super(PCIP)
 {
 	PrimaryActorTick.bCanEverTick = true;

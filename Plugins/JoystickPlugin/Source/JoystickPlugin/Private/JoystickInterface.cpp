@@ -3,7 +3,7 @@
 #include "JoystickPluginPrivatePCH.h"
 #include "JoystickInterface.h"
 
-UJoystickInterface::UJoystickInterface(const class FPostConstructInitializeProperties& PCIP)
+UJoystickInterface::UJoystickInterface(const class FObjectInitializer& PCIP)
 	: Super(PCIP)
 {
 

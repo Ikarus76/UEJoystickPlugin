@@ -5,7 +5,7 @@
 #include "FJoystickPlugin.h"
 #include "JoystickDelegate.h"
 #include "JoystickSingleController.h"
-#include "Slate.h"
+#include "SlateBasics.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -132,7 +132,6 @@ void FJoystickPlugin::StartupModule()
 	m_pCollector = new DataCollector;
 }
 
-#undef LOCTEXT_NAMESPACE
 
 void FJoystickPlugin::ShutdownModule()
 {
@@ -195,213 +194,128 @@ void FJoystickPlugin::JoystickTick(float DeltaTime)
 	
 }
 
-void EmitInputMappingButtonPressed(int button)
+//UE v4.6 IM event wrappers
+bool EmitKeyUpEventForKey(FKey key, int32 user, bool repeat)
 {
-	//currently supports buttons 1-16
-	switch (button)
-	{
-	case 1:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton1, 0, 0);
-		break;
-	case 2:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton2, 0, 0);
-		break;
-	case 3:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton3, 0, 0);
-		break;
-	case 4:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton4, 0, 0);
-		break;
-	case 5:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton5, 0, 0);
-		break;
-	case 6:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton6, 0, 0);
-		break;
-	case 7:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton7, 0, 0);
-		break;
-	case 8:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton8, 0, 0);
-		break;
-	case 9:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton9, 0, 0);
-		break;
-	case 10:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton10, 0, 0);
-		break;
-	case 11:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton11, 0, 0);
-		break;
-	case 12:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton12, 0, 0);
-		break;
-	case 13:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton13, 0, 0);
-		break;
-	case 14:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton14, 0, 0);
-		break;
-	case 15:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton15, 0, 0);
-		break;
-	case 16:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton16, 0, 0);
-		break;
-	case 17:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton17, 0, 0);
-		break;
-	case 18:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton18, 0, 0);
-		break;
-	case 19:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton19, 0, 0);
-		break;
-	case 20:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton20, 0, 0);
-		break;
-	case 21:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton21, 0, 0);
-		break;
-	case 22:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton22, 0, 0);
-		break;
-	case 23:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton23, 0, 0);
-		break;
-	case 24:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton24, 0, 0);
-		break;
-	case 25:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton25, 0, 0);
-		break;
-	case 26:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton26, 0, 0);
-		break;
-	case 27:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton27, 0, 0);
-		break;
-	case 28:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton28, 0, 0);
-		break;
-	case 29:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton29, 0, 0);
-		break;
-	case 30:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton30, 0, 0);
-		break;
-	case 31:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton31, 0, 0);
-		break;
-	case 32:
-		FSlateApplication::Get().OnControllerButtonPressed(EKeysJoystick::JoystickButton32, 0, 0);
-		break;
-	default:
-		break;
-	}
+	FKeyEvent KeyEvent(key, FSlateApplication::Get().GetModifierKeys(), user, repeat, 0, 0);
+	return FSlateApplication::Get().ProcessKeyUpEvent(KeyEvent);
 }
 
-void EmitInputMappingButtonReleased(int button)
+bool EmitKeyDownEventForKey(FKey key, int32 user, bool repeat)
+{
+	FKeyEvent KeyEvent(key, FSlateApplication::Get().GetModifierKeys(), user, repeat, 0, 0);
+	return FSlateApplication::Get().ProcessKeyDownEvent(KeyEvent);
+}
+
+bool EmitAnalogInputEventForKey(FKey key, float value, int32 user, bool repeat)
+{
+	FAnalogInputEvent AnalogInputEvent(key, FSlateApplication::Get().GetModifierKeys(), user, repeat, 0, 0, value);
+	return FSlateApplication::Get().ProcessAnalogInputEvent(AnalogInputEvent);
+}
+
+FKey keyForButtonIndex(int button)
 {
 	switch (button)
 	{
 	case 1:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton1, 0, 0);
+		return EKeysJoystick::JoystickButton1;
 		break;
 	case 2:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton2, 0, 0);
+		return EKeysJoystick::JoystickButton2;
 		break;
 	case 3:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton3, 0, 0);
+		return EKeysJoystick::JoystickButton3;
 		break;
 	case 4:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton4, 0, 0);
+		return EKeysJoystick::JoystickButton4;
 		break;
 	case 5:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton5, 0, 0);
+		return EKeysJoystick::JoystickButton5;
 		break;
 	case 6:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton6, 0, 0);
+		return EKeysJoystick::JoystickButton6;
 		break;
 	case 7:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton7, 0, 0);
+		return EKeysJoystick::JoystickButton7;
 		break;
 	case 8:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton8, 0, 0);
+		return EKeysJoystick::JoystickButton8;
 		break;
 	case 9:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton9, 0, 0);
+		return EKeysJoystick::JoystickButton9;
 		break;
 	case 10:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton10, 0, 0);
+		return EKeysJoystick::JoystickButton10;
 		break;
 	case 11:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton11, 0, 0);
+		return EKeysJoystick::JoystickButton11;
 		break;
 	case 12:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton12, 0, 0);
+		return EKeysJoystick::JoystickButton12;
 		break;
 	case 13:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton13, 0, 0);
+		return EKeysJoystick::JoystickButton13;
 		break;
 	case 14:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton14, 0, 0);
+		return EKeysJoystick::JoystickButton14;
 		break;
 	case 15:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton15, 0, 0);
+		return EKeysJoystick::JoystickButton15;
 		break;
 	case 16:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton16, 0, 0);
+		return EKeysJoystick::JoystickButton16;
 		break;
 	case 17:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton17, 0, 0);
+		return EKeysJoystick::JoystickButton17;
 		break;
 	case 18:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton18, 0, 0);
+		return EKeysJoystick::JoystickButton18;
 		break;
 	case 19:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton19, 0, 0);
+		return EKeysJoystick::JoystickButton19;
 		break;
 	case 20:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton20, 0, 0);
+		return EKeysJoystick::JoystickButton20;
 		break;
 	case 21:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton21, 0, 0);
+		return EKeysJoystick::JoystickButton21;
 		break;
 	case 22:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton22, 0, 0);
+		return EKeysJoystick::JoystickButton22;
 		break;
 	case 23:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton23, 0, 0);
+		return EKeysJoystick::JoystickButton23;
 		break;
 	case 24:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton24, 0, 0);
+		return EKeysJoystick::JoystickButton24;
 		break;
 	case 25:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton25, 0, 0);
+		return EKeysJoystick::JoystickButton25;
 		break;
 	case 26:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton26, 0, 0);
+		return EKeysJoystick::JoystickButton26;
 		break;
 	case 27:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton27, 0, 0);
+		return EKeysJoystick::JoystickButton27;
 		break;
 	case 28:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton28, 0, 0);
+		return EKeysJoystick::JoystickButton28;
 		break;
 	case 29:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton29, 0, 0);
+		return EKeysJoystick::JoystickButton29;
 		break;
 	case 30:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton30, 0, 0);
+		return EKeysJoystick::JoystickButton30;
 		break;
 	case 31:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton31, 0, 0);
+		return EKeysJoystick::JoystickButton31;
 		break;
 	case 32:
-		FSlateApplication::Get().OnControllerButtonReleased(EKeysJoystick::JoystickButton32, 0, 0);
+		return EKeysJoystick::JoystickButton32;
 		break;
 	default:
+		UE_LOG(JoystickPluginLog, Log, TEXT("Warning! Max Joystick button reached, returning button 1."));
+		return EKeysJoystick::JoystickButton1;
 		break;
 	}
 }
@@ -429,12 +343,12 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 			if (current->ButtonsPressedLow & bitVal)
 			{
 				joystickDelegate->JoystickButtonPressed(i + 1, current);
-				EmitInputMappingButtonPressed(i + 1);
+				EmitKeyDownEventForKey(keyForButtonIndex(i + 1), 0, 0);
 			}
 			else
 			{
 				joystickDelegate->JoystickButtonReleased(i + 1, current);
-				EmitInputMappingButtonReleased(i + 1);
+				EmitKeyUpEventForKey(keyForButtonIndex(i + 1), 0, 0);
 			}
 		}
 
@@ -444,12 +358,12 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 			if (current->ButtonsPressedHigh & bitVal)
 			{
 				joystickDelegate->JoystickButtonPressed(i + 33, current);
-				EmitInputMappingButtonPressed(i + 33);
+				EmitKeyDownEventForKey(keyForButtonIndex(i + 33), 0, 0);
 			}
 			else
 			{
 				joystickDelegate->JoystickButtonReleased(i + 33, current);
-				EmitInputMappingButtonReleased(i + 33);
+				EmitKeyUpEventForKey(keyForButtonIndex(i + 33), 0, 0);
 			}
 		}
 	}
@@ -458,18 +372,19 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 	if (current->Axis != prev->Axis)
 	{
 		joystickDelegate->AxisChanged(current->Axis, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickAxisX, 0, current->Axis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickAxisY, 0, current->Axis.Y);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickAxisZ, 0, current->Axis.Z);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisX, current->Axis.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisY, current->Axis.Y, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisZ, current->Axis.Z, 0, 0);
 	}
 
 	//check rotation axis
 	if (current->RAxis != prev->RAxis)
 	{
 		joystickDelegate->RAxisChanged(current->RAxis, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickRAxisX, 0, current->RAxis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickRAxisY, 0, current->RAxis.Y);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickRAxisZ, 0, current->RAxis.Z);
+
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisX, current->RAxis.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisY, current->RAxis.Y, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisZ, current->RAxis.Z, 0, 0);
 	}
 
 	//check pov
@@ -479,17 +394,17 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 
 		//Input Mapping, convert to joystick axis
 		FVector2D povAxis = current->POVAxis(POV_1);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV1X, 0, povAxis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV1Y, 0, povAxis.Y);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV1X, povAxis.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV1Y, povAxis.Y, 0, 0);
 	}
 	if (current->POV1 != prev->POV1)
 	{
 		joystickDelegate->POVChanged(current->POV1, current);
 
 		//Input Mapping, convert to joystick axis
-		FVector2D povAxis = current->POVAxis(POV_1);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV2X, 0, povAxis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV2Y, 0, povAxis.Y);
+		FVector2D povAxis = current->POVAxis(POV_2);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV2X, povAxis.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV2Y, povAxis.Y, 0, 0);
 	}
 	if (current->POV2 != prev->POV2)
 	{
@@ -497,16 +412,16 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 
 		//Input Mapping, convert to joystick axis
 		FVector2D povAxis = current->POVAxis(POV_3);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV3X, 0, povAxis.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickPOV3Y, 0, povAxis.Y);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV3X, povAxis.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOV3Y, povAxis.Y, 0, 0);
 	}
 
 	//check slider
 	if (current->Slider != prev->Slider)
 	{
 		joystickDelegate->SliderChanged(current->Slider, current);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider1, 0, current->Slider.X);
-		FSlateApplication::Get().OnControllerAnalog(EKeysJoystick::JoystickSlider2, 0, current->Slider.Y);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider1, current->Slider.X, 0, 0);
+		EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider2, current->Slider.Y, 0, 0);
 	}
 }
 
@@ -523,3 +438,6 @@ void FJoystickPlugin::ForceFeedbackXY(int32 x, int32 y, float magnitudeScale)
 	//scale the input to joystick scaling
 	SetForceFeedbackXY(x, y, magnitudeScale);
 }
+
+
+#undef LOCTEXT_NAMESPACE
