@@ -2,20 +2,20 @@
 
 namespace UnrealBuildTool.Rules
 {
-    using System.IO;
+	using System.IO;
 
 	public class JoystickPlugin : ModuleRules
 	{
-        private string ModulePath
-        {
-            get { return Path.GetDirectoryName(RulesCompiler.GetModuleFilename(this.GetType().Name)); }
-        }
+		private string ModulePath
+		{
+			get { return Path.GetDirectoryName(RulesCompiler.GetModuleFilename(this.GetType().Name)); }
+		}
 
 		/*
-        private string ThirdPartyPath
-        {
-            get { return Path.GetFullPath(Path.Combine(ModulePath, "../../ThirdParty/")); }
-        }*/
+		private string ThirdPartyPath
+		{
+			get { return Path.GetFullPath(Path.Combine(ModulePath, "../../ThirdParty/")); }
+		}*/
 
 		public JoystickPlugin(TargetInfo Target)
 		{
@@ -59,35 +59,35 @@ namespace UnrealBuildTool.Rules
 				}
 				);
 
-            //LoadHydraLib(Target);
+			//LoadHydraLib(Target);
 		}
 
 		/*
-        public bool LoadHydraLib(TargetInfo Target)
-        {
-            bool isLibrarySupported = false;
+		public bool LoadHydraLib(TargetInfo Target)
+		{
+			bool isLibrarySupported = false;
 
-            if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
-            {
-                isLibrarySupported = true;
+			if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+			{
+				isLibrarySupported = true;
 
-                string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "x64" : "x32";
-                string LibrariesPath = Path.Combine(ThirdPartyPath, "Sixense", "Lib");
+				string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "x64" : "x32";
+				string LibrariesPath = Path.Combine(ThirdPartyPath, "Sixense", "Lib");
 
-                //Lib based bind unsupported due to sixense wrong lib version compile, limiting platforms to windows 32/64
-                //PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "sixense_s_" + PlatformString + ".lib"));
-            }
+				//Lib based bind unsupported due to sixense wrong lib version compile, limiting platforms to windows 32/64
+				//PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "sixense_s_" + PlatformString + ".lib"));
+			}
 
-            if (isLibrarySupported)
-            {
-                // Include path
-                PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "Sixense", "Include"));
-            }
+			if (isLibrarySupported)
+			{
+				// Include path
+				PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "Sixense", "Include"));
+			}
 
-            //Definitions.Add(string.Format("WITH_HYDRA_BINDING={0}", isLibrarySupported ? 1 : 0));
+			//Definitions.Add(string.Format("WITH_HYDRA_BINDING={0}", isLibrarySupported ? 1 : 0));
 
-            return isLibrarySupported;
-        }*/
+			return isLibrarySupported;
+		}*/
 	}
 
 }

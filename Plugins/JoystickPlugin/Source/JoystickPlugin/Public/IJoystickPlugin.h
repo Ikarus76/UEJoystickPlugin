@@ -32,7 +32,7 @@ public:
 	 */
 	static inline bool IsAvailable()
 	{
-		return FModuleManager::Get().IsModuleLoaded( "JoystickPlugin" );
+		return FModuleManager::Get().IsModuleLoaded("JoystickPlugin");
 	}
 
 	/**

@@ -20,7 +20,7 @@ FVector2D JoystickUtilityNormalizeSlider(FVector2D value)
 
 float JoystickUtilityNormalizeForceValue(int32 value)
 {
-	return value/JOYSTICK_FF_RANGE;
+	return value / JOYSTICK_FF_RANGE;
 }
 
 int32 JoystickUtilityDeNormalizeForceValue(float value)

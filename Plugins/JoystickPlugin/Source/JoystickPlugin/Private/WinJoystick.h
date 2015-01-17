@@ -35,12 +35,17 @@
 #include <shellapi.h> 
 #include <wbemidl.h>
 
-#include "FJoystickDevice.h"
+#include "JoystickUtility.h"
+
+#include <Map.h>
+
+inline uint32 GetTypeHash(const GUID guid)
+{
+	auto data = reinterpret_cast<const uint64*>(&guid);
+	return HashCombine(GetTypeHash(data[0]), GetTypeHash(data[1]));
+}
 
 namespace {
-#define SAFE_DELETE(p)  { if(p) { delete (p);     (p)=nullptr; } }
-#define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=nullptr; } }
-
 	struct XINPUT_DEVICE_NODE {
 		DWORD dwVidPid;
 		XINPUT_DEVICE_NODE* pNext;
@@ -48,8 +53,9 @@ namespace {
 
 	XINPUT_DEVICE_NODE*     g_pXInputDeviceList = nullptr;
 	LPDIRECTINPUT8          g_pDI = nullptr;
-	LPDIRECTINPUTDEVICE8    g_pJoystick = nullptr;
-	bool JoystickFound = false;
+
+	TMap<GUID, LPDIRECTINPUTDEVICE8> g_JoystickDevices;
+	TMap<GUID, JoystickInfo> g_PluggedIn;
 
 	//FF
 	HWND					g_hWndFF;
@@ -62,10 +68,9 @@ namespace {
 	bool JoystickFFFound = false;
 
 	//Hot Plugging, dummy window
-	JoystickHotPlugInterface* hpDelegate;
-	bool JoystickStatePluggedIn = false;
 	HWND HPWindow;
-	
+	JoystickHotPlugInterface* hpDelegate;
+
 	struct DI_ENUM_CONTEXT
 	{
 		DIJOYCONFIG* pPreferredJoyCfg;
@@ -153,13 +158,12 @@ namespace {
 		if (FAILED(hr))
 			return DIENUM_CONTINUE;
 
-		// We successfully created an IDirectInputDevice8.  So stop looking 
-		// for another one.
-		g_pJoystick = pDevice;
+		// We successfully created an IDirectInputDevice8.
+		//g_pJoysticks.Add(pDevice);
 
 		JoystickFFFound = true;
 
-		return DIENUM_STOP;
+		return DIENUM_CONTINUE;
 	}
 
 	BOOL CALLBACK EnumAxesCallback(const DIDEVICEOBJECTINSTANCE* pdidoi,
@@ -298,7 +302,7 @@ namespace {
 		if (g_pJoystickFF && g_hWndFF != nullptr){
 			//g_pJoystickFF->Acquire();
 			//if (g_pEffect)
-				//g_pEffect->Start(1, 0);
+			//g_pEffect->Start(1, 0);
 		}
 
 		UE_LOG(JoystickPluginLog, Log, TEXT("ForceFeedback Device found and initialized."));
@@ -382,89 +386,98 @@ namespace {
 	{
 		HRESULT hr;
 
+		auto alreadyPluggedIn = g_PluggedIn;
+		g_PluggedIn.Empty(g_PluggedIn.Num());
+
 		//Release any references to the current joystick so we can pick up a different joystick if need be
-		SAFE_RELEASE(g_pJoystick);
 		//if (g_pJoystickFF)
 		//	CleanupFF();
 
-		JoystickFound = JoystickFFFound = false;
 		//try finding a FF joystick - this works, but it causes a crash downstream on a ff device sadly. Commented out for now, can be removed if deemed appropriate
 		/*if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
 			EnumFFDevicesCallback, nullptr,
 			DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK)))
-		{
+			{
 			UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick FF Enumerate Devices found."));
 			return hr;
-		}
+			}
 
-		if (JoystickFFFound){
+			if (JoystickFFFound){
 			UE_LOG(JoystickPluginLog, Log, TEXT("FF Device found, starting FF specific init..."));
 			JoystickFound = JoystickFFFound;
 			g_pJoystickFF = g_pJoystick;
 			InitDirectInputFF();
-		}
-		else{
-		*/	UE_LOG(JoystickPluginLog, Log, TEXT("No FF Device found, grabbing regular joystick."));
-
-			// Look for a simple joystick we can use for this sample program.
-			if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
-				EnumJoysticksCallback,
-				&enumContext, DIEDFL_ATTACHEDONLY)))
-			{
-				UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick Enumerate Devices found."));
-				return hr;
 			}
+			else{
+			UE_LOG(JoystickPluginLog, Log, TEXT("No FF Device found, grabbing regular joystick."));*/
+
+		if (FAILED(hr = g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL,
+			EnumJoysticksCallback, nullptr,
+			DIEDFL_ATTACHEDONLY)))
+		{
+			UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick Enumerate Devices found."));
+			return hr;
+		}
 		//}
 
 		CleanupForIsXInputDevice();
 
-		// Make sure we got a joystick
-		if (!g_pJoystick)
+		auto joysticksCopy = g_JoystickDevices;
+		for (auto &joystick : joysticksCopy)
 		{
-			if (!JoystickFound && JoystickStatePluggedIn)
+			if (!g_PluggedIn.Contains(joystick.Key))
 			{
 				if (hpDelegate)
-					hpDelegate->JoystickUnplugged();
-				JoystickStatePluggedIn = false;
+					hpDelegate->JoystickUnplugged(joystick.Key);
+				g_JoystickDevices.Remove(joystick.Key);
 			}
+		}
+
+		// Make sure we got a joystick
+		if (g_JoystickDevices.Num() == 0)
+		{
 			UE_LOG(JoystickPluginLog, Log, TEXT("No Joystick Device found."));
 			return S_FALSE;
 		}
 
-		// Set the data format to "simple joystick" - a predefined data format 
-		//
-		// A data format specifies which controls on a device we are interested in,
-		// and how they should be reported. This tells DInput that we will be
-		// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
-		if (FAILED(hr = g_pJoystick->SetDataFormat(&c_dfDIJoystick2)))
-			return hr;
-
-
-		// Enumerate the joystick objects. The callback function enabled user
-		// interface elements for objects that are found, and sets the min/max
-		// values property for discovered axes.
-		if (FAILED(hr = g_pJoystick->EnumObjects(EnumObjectsCallback,
-			NULL/*enum param!*/, DIDFT_ALL)))
-			return hr;
-
-		//Debug
-		UE_LOG(JoystickPluginLog, Log, TEXT("Hot Plug Joystick detected: %d state: %d"), JoystickFound, JoystickStatePluggedIn);
-		
-		//Detect
-		if (JoystickFound && !JoystickStatePluggedIn)
+		for (auto &joystick : g_JoystickDevices)
 		{
-			if (hpDelegate)
-				hpDelegate->JoystickPluggedIn();
-			JoystickStatePluggedIn = true;
+			// Set the data format to "simple joystick" - a predefined data format 
+			//
+			// A data format specifies which controls on a device we are interested in,
+			// and how they should be reported. This tells DInput that we will be
+			// passing a DIJOYSTATE2 structure to IDirectInputDevice::GetDeviceState().
+			if (FAILED(hr = joystick.Value->SetDataFormat(&c_dfDIJoystick2)))
+				return hr;
+
+			// Enumerate the joystick objects. The callback function enabled user
+			// interface elements for objects that are found, and sets the min/max
+			// values property for discovered axes.
+			if (FAILED(hr = joystick.Value->EnumObjects(EnumObjectsCallback,
+				&joystick.Key, DIDFT_ALL)))
+				return hr;
+
+			//Acquire the joystick
+			if (FAILED(hr = joystick.Value->Acquire()))
+				return hr;
 		}
 
-		//Acquire the joystick
-		return g_pJoystick->Acquire();
+		//Debug
+		UE_LOG(JoystickPluginLog, Log, TEXT("Hot Plug Joystick detected, count: %d"), g_JoystickDevices.Num());
 
-		//return S_OK;
+		for (auto &joystick : g_JoystickDevices)
+		{
+			if (!alreadyPluggedIn.Contains(joystick.Key))
+			{
+				if (hpDelegate)
+					hpDelegate->JoystickPluggedIn(g_PluggedIn[joystick.Key]);
+			}
+		}
+
+		return S_OK;
 	}
 
-	INT_PTR WINAPI WinProcCallback(
+	LONG_PTR WINAPI WinProcCallback(
 		HWND hWnd,
 		UINT message,
 		WPARAM wParam,
@@ -513,7 +526,7 @@ namespace {
 		NotificationFilter.dbcc_reserved = 0;
 
 		NotificationFilter.dbcc_classguid = { 0x25dbce51, 0x6c8f, 0x4a72,
-			0x8a, 0x6d, 0xb5, 0x4c, 0x2b, 0x4f, 0xc8, 0x35 };
+		{ 0x8a, 0x6d, 0xb5, 0x4c, 0x2b, 0x4f, 0xc8, 0x35 } };
 
 		HDEVNOTIFY hDevNotify = RegisterDeviceNotification(NULL, &NotificationFilter, DEVICE_NOTIFY_SERVICE_HANDLE);
 
@@ -548,12 +561,6 @@ namespace {
 		SAFE_RELEASE(pJoyConfig);
 
 		CheckForJoystickPlugin();
-
-		if (JoystickFound)
-		{
-			UE_LOG(JoystickPluginLog, Log, TEXT("Joystick found plugged in."));
-			JoystickStatePluggedIn = true;
-		}
 
 		UE_LOG(JoystickPluginLog, Log, TEXT("Joystick Init success."));
 		return S_OK;
@@ -699,7 +706,8 @@ namespace {
 	/**
 	* Cleanup needed for IsXInputDevice()
 	*/
-	FORCEINLINE void CleanupForIsXInputDevice() {
+	FORCEINLINE void CleanupForIsXInputDevice()
+	{
 		// Cleanup linked list 
 		XINPUT_DEVICE_NODE* pNode = g_pXInputDeviceList;
 		while (pNode) {
@@ -713,51 +721,55 @@ namespace {
 	* Called once for each enumerated joystick.
 	* If we find one, create a device interface on it so we can play with it.
 	*/
-	/*static*/ 
+	/*static*/
 	BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 	{
-		auto pEnumContext = reinterpret_cast<DI_ENUM_CONTEXT*>(pContext);
 		HRESULT hr;
 
 		if (/*g_bFilterOutXinputDevices*/ false && IsXInputDevice(&pdidInstance->guidProduct))
 			return DIENUM_CONTINUE;
 
-		// Skip anything other than the perferred joystick device as defined by the control panel.  
-		// Instead you could store all the enumerated joysticks and let the user pick.
-		if (pEnumContext->bPreferredJoyCfgValid &&
-			!IsEqualGUID(pdidInstance->guidInstance, pEnumContext->pPreferredJoyCfg->guidInstance))
+		auto & joystick = g_PluggedIn.Add(pdidInstance->guidInstance);
+		joystick.InstanceId = pdidInstance->guidInstance;
+		joystick.ProductId = pdidInstance->guidProduct;
+		joystick.ProductName = pdidInstance->tszProductName;
+		joystick.InstanceName = pdidInstance->tszInstanceName;
+		joystick.Connected = true;
+
+		if (g_JoystickDevices.Contains(pdidInstance->guidInstance))
 			return DIENUM_CONTINUE;
 
 		// Obtain an interface to the enumerated joystick.
-		hr = g_pDI->CreateDevice(pdidInstance->guidInstance, &g_pJoystick, nullptr);
+		LPDIRECTINPUTDEVICE8 device;
+		hr = g_pDI->CreateDevice(pdidInstance->guidInstance, &device, nullptr);
 
 		// If it failed, then we can't use this joystick. (Maybe the user unplugged
 		// it while we were in the middle of enumerating it.)
 		if (FAILED(hr))
 			return DIENUM_CONTINUE;
 
-		// Stop enumeration. Note: we're just taking the first joystick we get. You
-		// could store all the enumerated joysticks and let the user pick.
-		JoystickFound = true;
+		g_JoystickDevices.Add(pdidInstance->guidInstance, device);
 
-		return DIENUM_STOP;
+		UE_LOG(JoystickPluginLog, Log, TEXT("Joystick found: %s"), pdidInstance->tszInstanceName);
+
+		return DIENUM_CONTINUE;
 	}
 
 	/**
 	* Callback function for enumerating objects (axes, buttons, POVs) on a joystick.
 	* This function enables user interface elements for objects that are found to exist, and scales axes min/max values.
 	*/
-	/*static*/ 
-	BOOL CALLBACK EnumObjectsCallback(const DIDEVICEOBJECTINSTANCE* pdidoi, VOID* pContext) 
+	/*static*/
+	BOOL CALLBACK EnumObjectsCallback(const DIDEVICEOBJECTINSTANCE* pdidoi, VOID* pContext)
 	{
+		auto joyId = *reinterpret_cast<GUID*>(pContext);
 
 		// For axes that are returned, set the DIPROP_RANGE property for the 
 		// enumerated axis in order to scale min/max values. 
 
 		//TODO : SET PROPERTIES
 
-		
-		if (pdidoi->dwType & DIDFT_AXIS) 
+		if (pdidoi->dwType & DIDFT_AXIS)
 		{
 			// Joystick has didft_axes
 			OutputDebugString(_T("DIDFT_AXIS\n"));
@@ -769,7 +781,7 @@ namespace {
 			diprg.diph.dwObj = pdidoi->dwType; // Specify the enumerated axis 
 
 			// Get the range for the axis 
-			HRESULT hr = g_pJoystick->GetProperty(DIPROP_RANGE, &diprg.diph);
+			HRESULT hr = g_JoystickDevices[joyId]->GetProperty(DIPROP_RANGE, &diprg.diph);
 			switch (hr) {
 			case DIERR_INVALIDPARAM:
 				//JD_CERR("Failed to set joystick property: Invalid parameter!");
@@ -787,7 +799,7 @@ namespace {
 
 			//DeviceInfo.AxisInfo.MinValue = diprg.lMin;
 			//DeviceInfo.AxisInfo.MaxValue = diprg.lMax;
-			
+
 		}
 		// Set the UI to reflect what objects the joystick supports
 		if (pdidoi->guidType == GUID_XAxis)
@@ -839,13 +851,29 @@ namespace {
 		return DIENUM_CONTINUE;
 	}
 
-	BOOL GetDeviceState(joystickControllerDataUE* pJoyData) {
+	JoystickPOVDirection povValToDirection(DWORD value)
+	{
+		switch (value){
+		case -1:	return DIRECTION_NONE;
+		case 0:		return DIRECTION_UP;
+		case 4500:	return DIRECTION_UP_RIGHT;
+		case 9000:	return DIRECTION_RIGHT;
+		case 13500:	return DIRECTION_DOWN_RIGHT;
+		case 18000:	return DIRECTION_DOWN;
+		case 22500:	return DIRECTION_DOWN_LEFT;
+		case 27000:	return DIRECTION_LEFT;
+		case 31500:	return DIRECTION_UP_LEFT;
+		default:
+			//UE_LOG(LogTemp, Warning, TEXT("Warning, POV unhandled case. %d"), (int32)value);
+			return DIRECTION_NONE;
+		}
+	}
 
+	BOOL GetDeviceState(JoystickData & joyData, GUID id)
+	{
+		LPDIRECTINPUTDEVICE8 joystick = g_JoystickDevices[id];
 		DIJOYSTATE2 js;				// DInput joystick state  
-
-		if (!g_pJoystick) return false;
-
-		HRESULT hr = g_pJoystick->Poll();
+		HRESULT hr = joystick->Poll();
 		// Poll the device to read the current state 
 		if (FAILED(hr))
 		{
@@ -853,9 +881,9 @@ namespace {
 			// interrupted. We aren't tracking any state between polls, so
 			// we don't have any special reset that needs to be done. We
 			// just re-acquire and try again.
-			hr = g_pJoystick->Acquire();
+			hr = joystick->Acquire();
 			while (hr == DIERR_INPUTLOST)
-				hr = g_pJoystick->Acquire();
+				hr = joystick->Acquire();
 
 			// hr may be DIERR_OTHERAPPHASPRIO or other errors.  This
 			// may occur when the app is minimized or in the process of 
@@ -863,41 +891,36 @@ namespace {
 			return false;
 		}
 
+		LONG HALF_RANGE = 1 << 15;
+
 		// Get the input's device state 
-		hr = g_pJoystick->GetDeviceState(sizeof(DIJOYSTATE2), &js);
-		pJoyData->Axis = FVector(js.lX, js.lY, js.lZ);
-		pJoyData->RAxis = FVector(js.lRx, js.lRy, js.lRz);
+		hr = joystick->GetDeviceState(sizeof(DIJOYSTATE2), &js);
+		joyData.Axis = FVector(js.lX - HALF_RANGE, js.lY - HALF_RANGE, js.lZ - HALF_RANGE) / HALF_RANGE;
+		joyData.RAxis = FVector(js.lRx - HALF_RANGE, js.lRy - HALF_RANGE, js.lRz - HALF_RANGE) / HALF_RANGE;
 
-		pJoyData->POV.X = js.rgdwPOV[0];
-		pJoyData->POV.Y = js.rgdwPOV[1];
-		pJoyData->POV.Z = js.rgdwPOV[2];
+		for (int i = 0; i < 4; i++)
+		{
+			joyData.POV[i] = povValToDirection(js.rgdwPOV[i]);
+		}
 
-		pJoyData->Slider.X = js.rglSlider[0];
-		pJoyData->Slider.Y = js.rglSlider[1];
+		joyData.Slider = FVector2D(js.rglSlider[0] - HALF_RANGE, js.rglSlider[1] - HALF_RANGE) / HALF_RANGE;
 
-		pJoyData->buttonsPressedL = 0;
-		int bitVal = 0;
-		for (int i = 0; i < 32; i++){
+		joyData.buttonsPressedL = 0;
+		joyData.buttonsPressedH = 0;
+		for (int64 i = 0; i < 64; i++)
+		{
 			if (js.rgbButtons[i] != 0)
 			{
-				if (i == 0) bitVal = 1;
-				else bitVal = pow(2, i);
+				joyData.buttonsPressedL |= int64(1) << i;
 			}
-			pJoyData->buttonsPressedL |= bitVal;
-		}
-
-		pJoyData->buttonsPressedH = 0;
-		bitVal = 0;
-		for (int i = 0; i < 32; i++){
-			if (js.rgbButtons[i+32] != 0)
+			if (js.rgbButtons[i + 64] != 0)
 			{
-				if (i == 0) bitVal = 1;
-				else bitVal = pow(2, i);
+				joyData.buttonsPressedH |= int64(1) << i;
 			}
-			pJoyData->buttonsPressedH |= bitVal;
 		}
 
-		if (hr!=S_OK) {
+		if (hr != S_OK)
+		{
 			switch (hr)
 			{
 			case DIERR_INPUTLOST:

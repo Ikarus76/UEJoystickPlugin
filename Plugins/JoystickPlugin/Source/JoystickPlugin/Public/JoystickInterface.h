@@ -38,28 +38,28 @@ public:
 
 	//Define blueprint events
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonPressed(int32 ButtonNr, class UJoystickSingleController* controller);
+	void JoystickButtonPressed(int32 ButtonNr, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonReleased(int32 ButtonNr, class UJoystickSingleController* controller);
+	void JoystickButtonReleased(int32 ButtonNr, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickAxisChanged(FVector AxisValue, class UJoystickSingleController* controller);
+	void JoystickAxisChanged(FVector AxisValue, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickRAxisChanged(FVector AxisValue, class UJoystickSingleController* controller);
+	void JoystickRAxisChanged(FVector AxisValue, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickPOVChanged(JoystickPOVDirection POVDirection, class UJoystickSingleController* controller);
+	void JoystickPOVChanged(JoystickPOVDirection POVDirection, int32 index, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickSliderChanged(FVector2D SliderValue, class UJoystickSingleController* controller);
+	void JoystickSliderChanged(FVector2D SliderValue, int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickPluggedIn();
+	void JoystickPluggedIn(int32 player);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickUnplugged();
+	void JoystickUnplugged(int32 player);
 
 	virtual FString ToString();
 };

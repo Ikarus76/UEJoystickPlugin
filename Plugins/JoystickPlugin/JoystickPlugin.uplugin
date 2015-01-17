@@ -1,21 +1,21 @@
 {
-    "FileVersion" : 3,
-	
-	"FriendlyName" : "Joystick Plugin",
-	"Version" : 4,
-	"VersionName" : "0.2.4",
-	"CreatedBy" : "Ikarus76",
-	"CreatedByURL" : "http://sambabyte.net",
-	"EngineVersion" : "4.5.0",
-	"Description" : "Unofficial plugin for Joystick Controllers",
-	"Category" : "Input.Controller",
-	
-    "Modules" :
+	"FileVersion": 3,
+
+	"FriendlyName": "Joystick Plugin",
+	"Version": 5,
+	"VersionName": "0.3.0",
+	"CreatedBy": "Ikarus76",
+	"CreatedByURL": "http://sambabyte.net",
+	"EngineVersion": "4.5.0",
+	"Description": "Unofficial plugin for Joystick Controllers",
+	"Category": "Input.Controller",
+
+	"Modules": 
 	[
 		{
-			"Name" : "JoystickPlugin",
-			"Type" : "Runtime",
-			"WhitelistPlatforms" : [ "Win64", "Win32" ]
+			"Name": "JoystickPlugin",
+			"Type": "Runtime",
+			"WhitelistPlatforms": [ "Win64", "Win32" ]
 		}
 	]
 }

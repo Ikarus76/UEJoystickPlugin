@@ -4,8 +4,10 @@
 #include "JoystickDelegate.h"
 #include "JoystickPlayerController.generated.h"
 
+class UJoystickSingleController;
+
 /**
- * 
+ *
  */
 UCLASS()
 class AJoystickPlayerController : public APlayerController, public JoystickDelegate, public IJoystickInterface
@@ -17,11 +19,14 @@ class AJoystickPlayerController : public APlayerController, public JoystickDeleg
 	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
 	bool IsAvailable();
 
-	//** Get the latest available data given in a single frame. Valid ControllerId is 0 or 1  */
-	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
-	UJoystickSingleController* GetLatestFrame();
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	UJoystickSingleController* GetJoystick(int32 index);
+
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	int32 JoystickCount();
 
 	//Override Initialization and Tick to forward *required* hydra functions.
 	virtual void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 };

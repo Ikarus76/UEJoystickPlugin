@@ -23,6 +23,13 @@ void UJoystickComponent::OnRegister()
 	JoystickStartup();
 }
 
+void UJoystickComponent::OnUnregister()
+{
+	Super::OnUnregister();
+
+	JoystickStop();
+}
+
 void UJoystickComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	FActorComponentTickFunction *ThisTickFunction)
 {
@@ -39,10 +46,15 @@ bool UJoystickComponent::IsAvailable()
 	return JoystickDelegate::JoystickIsAvailable();
 }
 
-
-UJoystickSingleController* UJoystickComponent::GetLatestFrame()
+UJoystickSingleController* UJoystickComponent::GetJoystick(int32 player)
 {
-	return JoystickDelegate::JoystickGetLatestFrame();
+	if (player < 0 || player >= Joysticks.Num()) return nullptr;
+	UJoystickSingleController * joystick = NewObject<UJoystickSingleController>(this);
+	joystick->Init(player, LatestFrame[player], Joysticks[player]);
+	return joystick;
 }
 
-
+int32 UJoystickComponent::JoystickCount()
+{
+	return Joysticks.Num();
+}

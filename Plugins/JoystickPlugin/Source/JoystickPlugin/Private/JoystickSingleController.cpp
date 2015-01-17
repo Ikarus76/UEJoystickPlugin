@@ -1,123 +1,69 @@
 #include "JoystickPluginPrivatePCH.h"
-#include "IJoystickPlugin.h"
 #include "JoystickDelegate.h"
 #include "JoystickSingleController.h"
 
-UJoystickSingleController::UJoystickSingleController(const FObjectInitializer &init) : UObject(init)
+UJoystickSingleController::UJoystickSingleController(const FObjectInitializer& ObjectInitializer) : UObject(ObjectInitializer)
 {
-	Reset();
 }
 
-JoystickPOVDirection povValToDirection(float value)
+int32 UJoystickSingleController::Player()
 {
-	switch ((int32)value){
-	case -1:	return DIRECTION_NONE;
-	case 0:		return DIRECTION_UP;
-	case 4500:	return DIRECTION_UP_RIGHT;
-	case 9000:	return DIRECTION_RIGHT;
-	case 13500:	return DIRECTION_DOWN_RIGHT;
-	case 18000:	return DIRECTION_DOWN;
-	case 22500:	return DIRECTION_DOWN_LEFT;
-	case 27000:	return DIRECTION_LEFT;
-	case 31500:	return DIRECTION_UP_LEFT;
-	default:
-		//UE_LOG(LogTemp, Warning, TEXT("Warning, POV unhandled case. %d"), (int32)value);
-		return DIRECTION_NONE;
-	}
+	return player;
 }
 
-
-void UJoystickSingleController::setFromJoystickDataUE(joystickControllerDataUE* data)
+int64 UJoystickSingleController::ButtonsPressedLow()
 {
-	this->ButtonsPressedLow = data->buttonsPressedL;
-	this->ButtonsPressedHigh = data->buttonsPressedH;
-
-	this->Axis = JoystickUtilityNormalizeAxis(data->Axis);
-	this->RAxis = JoystickUtilityNormalizeAxis(data->RAxis);
-	
-	//this->POV1 = data->POV1;
-
-	this->POV0 = povValToDirection(data->POV.X);
-	this->POV1 = povValToDirection(data->POV.Y);
-	this->POV2 = povValToDirection(data->POV.Z);
-
-	this->Slider = JoystickUtilityNormalizeSlider(data->Slider);
-
-	this->IsValid = true;
+	return data.buttonsPressedL;
 }
 
-FVector2D UJoystickSingleController::POVAxis(POVIndex Index)
+int64 UJoystickSingleController::ButtonsPressedHigh()
 {
-	TEnumAsByte<JoystickPOVDirection> povValue = DIRECTION_NONE;
-
-	switch (Index)
-	{
-	case POV_1:
-		povValue = POV0;
-		break;
-	case POV_2:
-		povValue = POV1;
-		break;
-	case POV_3:
-		povValue = POV2;
-		break;
-	default:
-		break;
-	}
-
-	switch (povValue){
-	case DIRECTION_NONE:
-		return FVector2D(0, 0);
-		break;
-	case DIRECTION_UP:
-		return FVector2D(0, 1);
-		break;
-	case DIRECTION_UP_RIGHT:
-		return FVector2D(1, 1);
-		break;
-	case DIRECTION_RIGHT:
-		return FVector2D(1, 0);
-		break;
-	case DIRECTION_DOWN_RIGHT:
-		return FVector2D(1, -1);
-		break;
-	case DIRECTION_DOWN:
-		return FVector2D(0, -1);
-		break;
-	case DIRECTION_DOWN_LEFT:
-		return FVector2D(-1, -1);
-		break;
-	case DIRECTION_LEFT:
-		return FVector2D(-1, 0);
-		break;
-	case DIRECTION_UP_LEFT:
-		return FVector2D(-1, 1);
-		break;
-	default:
-		return FVector2D(0, 0);
-		break;
-	}
+	return data.buttonsPressedH;
 }
 
-/*void UJoystickSingleController::ForceFeedback(float x, float y, float scale)
+bool UJoystickSingleController::ButtonPressed(int32 number)
 {
-	//Get the plugin singleton and forward the force feedback
-	if (IJoystickPlugin::IsAvailable())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Denormalized values: %d, %d"), JoystickUtilityDeNormalizeForceValue(x), JoystickUtilityDeNormalizeForceValue(y));
-		IJoystickPlugin::Get().ForceFeedbackXY(JoystickUtilityDeNormalizeForceValue(x), JoystickUtilityDeNormalizeForceValue(y), scale);
-	}
-}*/
+	if (number < 1 || number > 128) return false;
+	number--;
+	return (number < 64
+		? data.buttonsPressedL & (uint64(1) << number)
+		: data.buttonsPressedH & (uint64(1) << (number - 64))) != 0;
+}
 
-void UJoystickSingleController::Reset()
+FVector UJoystickSingleController::Axis() { return data.Axis; }
+
+FVector UJoystickSingleController::RAxis() { return data.RAxis; }
+
+TEnumAsByte<JoystickPOVDirection> UJoystickSingleController::POV(int32 index)
 {
-	this->ButtonsPressedLow = 0;
-	this->ButtonsPressedHigh = 0;
-	this->Axis = FVector(0, 0, 0);
-	this->RAxis = FVector(0, 0, 0);
-	this->POV0 = DIRECTION_NONE;
-	this->POV1 = DIRECTION_NONE;
-	this->POV2 = DIRECTION_NONE;
-	this->Slider = FVector2D::ZeroVector;
-	this->IsValid = false;
+	if (index < 1 || index > 4) return DIRECTION_NONE;
+	return data.POV[index - 1];
+}
+
+FVector2D UJoystickSingleController::POVAxis(int32 index)
+{
+	if (index < 1 || index > 4) return FVector2D(0, 0);
+	return POVAxis(data.POV[index - 1]);
+}
+
+FVector2D UJoystickSingleController::Slider() { return data.Slider; }
+
+bool UJoystickSingleController::IsConnected() { return info.Connected; }
+
+FGuid UJoystickSingleController::ProductId()
+{
+	FGuid guid;
+	memcpy(&guid, &info.ProductId, sizeof(FGuid));
+	return guid;
+}
+
+FName UJoystickSingleController::ProductName() { return info.ProductName; }
+
+FName UJoystickSingleController::InstanceName() { return info.InstanceName; }
+
+void UJoystickSingleController::Init(int player, const JoystickData &data, const JoystickInfo &info)
+{
+	this->player = player;
+	this->data = data;
+	this->info = info;
 }

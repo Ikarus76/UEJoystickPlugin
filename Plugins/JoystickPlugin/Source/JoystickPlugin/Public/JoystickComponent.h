@@ -4,7 +4,9 @@
 #include "JoystickDelegate.h"
 #include "JoystickComponent.generated.h"
 
-UCLASS(ClassGroup="Input Controller", meta=(BlueprintSpawnableComponent))
+class UJoystickSingleController;
+
+UCLASS(ClassGroup = "Input Controller", meta = (BlueprintSpawnableComponent))
 class UJoystickComponent : public UActorComponent, public JoystickDelegate
 {
 	GENERATED_UCLASS_BODY()
@@ -16,10 +18,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
 	bool IsAvailable();
 
-	//** Get the latest available data given in a single frame. Valid ControllerId is 0 or 1  */
-	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
-	UJoystickSingleController* GetLatestFrame();
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	UJoystickSingleController* GetJoystick(int32 player);
+
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	int32 JoystickCount();
 
 	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 };

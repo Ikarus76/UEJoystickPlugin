@@ -4,10 +4,11 @@
 #include "GameFramework/Actor.h"
 #include "JoystickDelegate.h"
 #include "JoystickPluginActor.h"
+#include "JoystickSingleController.h"
 
 //Constructor/Initializer
 AJoystickPluginActor::AJoystickPluginActor(const FObjectInitializer& PCIP)
-: Super(PCIP)
+	: Super(PCIP)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -17,11 +18,6 @@ AJoystickPluginActor::AJoystickPluginActor(const FObjectInitializer& PCIP)
 bool AJoystickPluginActor::IsAvailable()
 {
 	return JoystickDelegate::JoystickIsAvailable();
-}
-
-UJoystickSingleController* AJoystickPluginActor::GetLatestFrame()
-{
-	return JoystickDelegate::JoystickGetLatestFrame();
 }
 
 //Required Overrides
@@ -38,6 +34,13 @@ void AJoystickPluginActor::BeginPlay()
 	JoystickStartup();
 }
 
+void AJoystickPluginActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	JoystickStop();
+}
+
 void AJoystickPluginActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -46,3 +49,15 @@ void AJoystickPluginActor::Tick(float DeltaTime)
 	JoystickTick(DeltaTime);
 }
 
+UJoystickSingleController* AJoystickPluginActor::GetJoystick(int32 player)
+{
+	if (player < 0 || player >= Joysticks.Num()) return nullptr;
+	UJoystickSingleController * joystick = NewObject<UJoystickSingleController>(this);
+	joystick->Init(player, LatestFrame[player], Joysticks[player]);
+	return joystick;
+}
+
+int32 AJoystickPluginActor::JoystickCount()
+{
+	return Joysticks.Num();
+}

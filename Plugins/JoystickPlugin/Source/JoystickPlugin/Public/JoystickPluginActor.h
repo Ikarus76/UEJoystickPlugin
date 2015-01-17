@@ -4,8 +4,6 @@
 #include "JoystickDelegate.h"
 #include "JoystickPluginActor.generated.h"
 
-
-
 /**
  * Placeable Actor Example that receives Hydra input,
  * override any delegate functions to receive notifications.
@@ -13,6 +11,8 @@
  *
  * Copy implementations to receive same functionality in a different class.
  */
+
+class UJoystickSingleController;
 
 UCLASS()
 class AJoystickPluginActor : public AActor, public JoystickDelegate, public IJoystickInterface //Multiple Inheritance, add JoystickDelegate inheritance to inherit all delegate functionality
@@ -24,13 +24,15 @@ class AJoystickPluginActor : public AActor, public JoystickDelegate, public IJoy
 	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
 	bool IsAvailable();
 
-	//** Get the latest available data given in a single frame. Valid ControllerId is 0 or 1  */
-	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
-	UJoystickSingleController* GetLatestFrame();
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	UJoystickSingleController* GetJoystick(int32 player);
 
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	int32 JoystickCount();
 
 	//Override Initialization and Tick to forward *required* hydra functions.
 	virtual void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 };
 
