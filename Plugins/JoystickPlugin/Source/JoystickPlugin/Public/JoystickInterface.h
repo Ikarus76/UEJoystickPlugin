@@ -16,12 +16,57 @@ enum JoystickPOVDirection
 	DIRECTION_UP_LEFT,
 };
 
-UENUM(BlueprintType)
-enum POVIndex
+FVector2D POVAxis(JoystickPOVDirection povValue);
+
+USTRUCT(BlueprintType)
+struct FJoystickState
 {
-	POV_1,
-	POV_2,
-	POV_3
+	GENERATED_USTRUCT_BODY()
+
+	explicit FJoystickState(int32 player = -1)
+	: Player(player)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			POV.Add(DIRECTION_NONE);
+		}
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	int32 Player;
+
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	uint64 buttonsPressedL = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	uint64 buttonsPressedH = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	FVector Axis = FVector(0);
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	FVector RAxis = FVector(0);
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	TArray<TEnumAsByte<JoystickPOVDirection>> POV;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
+	FVector2D Slider = FVector2D(0, 0);
+};
+
+USTRUCT(BlueprintType)
+struct FJoystickInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	int32 Player = -1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	FGuid InstanceId;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	FGuid ProductId;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	FName ProductName;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	FName InstanceName;
+	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
+	bool Connected = false;
 };
 
 UINTERFACE(MinimalAPI)
@@ -38,28 +83,28 @@ public:
 
 	//Define blueprint events
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonPressed(int32 ButtonNr, int32 player);
+	void JoystickButtonPressed(int32 ButtonNr, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickButtonReleased(int32 ButtonNr, int32 player);
+	void JoystickButtonReleased(int32 ButtonNr, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickAxisChanged(FVector AxisValue, int32 player);
+	void JoystickAxisChanged(FVector AxisValue, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickRAxisChanged(FVector AxisValue, int32 player);
+	void JoystickRAxisChanged(FVector AxisValue, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickPOVChanged(JoystickPOVDirection POVDirection, int32 index, int32 player);
+	void JoystickPOVChanged(JoystickPOVDirection POVDirection, int32 index, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickSliderChanged(FVector2D SliderValue, int32 player);
+	void JoystickSliderChanged(FVector2D SliderValue, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickPluggedIn(int32 player);
+	void JoystickPluggedIn(FJoystickInfo joystick);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickUnplugged(int32 player);
+	void JoystickUnplugged(FJoystickInfo joystick);
 
 	virtual FString ToString();
 };

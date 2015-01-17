@@ -20,7 +20,10 @@ class AJoystickPlayerController : public APlayerController, public JoystickDeleg
 	bool IsAvailable();
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
-	UJoystickSingleController* GetJoystick(int32 index);
+	FJoystickInfo GetJoystick(int32 playerIndex);
+
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	FJoystickState GetLatestFrame(int32 playerIndex);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
 	int32 JoystickCount();

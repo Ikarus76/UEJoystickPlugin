@@ -23,9 +23,12 @@ class AJoystickPluginActor : public AActor, public JoystickDelegate, public IJoy
 	/** Check if the hydra is available/plugged in.*/
 	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
 	bool IsAvailable();
+	
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	FJoystickInfo GetJoystick(int32 player);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
-	UJoystickSingleController* GetJoystick(int32 player);
+	FJoystickState GetLatestFrame(int32 player);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
 	int32 JoystickCount();

@@ -1,6 +1,5 @@
 #include "JoystickPluginPrivatePCH.h"
 #include "JoystickComponent.h"
-#include "JoystickSingleController.h"
 #include "JoystickInterface.h"
 #include "Engine.h"
 #include "CoreUObject.h"
@@ -46,12 +45,16 @@ bool UJoystickComponent::IsAvailable()
 	return JoystickDelegate::JoystickIsAvailable();
 }
 
-UJoystickSingleController* UJoystickComponent::GetJoystick(int32 player)
+FJoystickInfo UJoystickComponent::GetJoystick(int32 player)
 {
-	if (player < 0 || player >= Joysticks.Num()) return nullptr;
-	UJoystickSingleController * joystick = NewObject<UJoystickSingleController>(this);
-	joystick->Init(player, LatestFrame[player], Joysticks[player]);
-	return joystick;
+	if (player < 0 || player >= Joysticks.Num()) return FJoystickInfo();
+	return Joysticks[player];
+}
+
+FJoystickState UJoystickComponent::GetLatestFrame(int32 player)
+{
+	if (player < 0 || player >= Joysticks.Num()) return FJoystickState();
+	return LatestFrame[player];
 }
 
 int32 UJoystickComponent::JoystickCount()

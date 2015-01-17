@@ -2,6 +2,7 @@
 
 #include "JoystickPluginPrivatePCH.h"
 #include "JoystickDelegate.h"
+#include "JoystickInterface.h"
 #include "JoystickComponent.generated.h"
 
 class UJoystickSingleController;
@@ -19,7 +20,10 @@ public:
 	bool IsAvailable();
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
-	UJoystickSingleController* GetJoystick(int32 player);
+	FJoystickInfo GetJoystick(int32 player);
+
+	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
+	FJoystickState GetLatestFrame(int32 player);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
 	int32 JoystickCount();

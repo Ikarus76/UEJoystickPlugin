@@ -4,7 +4,6 @@
 #include "GameFramework/Actor.h"
 #include "JoystickDelegate.h"
 #include "JoystickPluginActor.h"
-#include "JoystickSingleController.h"
 
 //Constructor/Initializer
 AJoystickPluginActor::AJoystickPluginActor(const FObjectInitializer& PCIP)
@@ -49,14 +48,17 @@ void AJoystickPluginActor::Tick(float DeltaTime)
 	JoystickTick(DeltaTime);
 }
 
-UJoystickSingleController* AJoystickPluginActor::GetJoystick(int32 player)
+FJoystickInfo AJoystickPluginActor::GetJoystick(int32 player)
 {
-	if (player < 0 || player >= Joysticks.Num()) return nullptr;
-	UJoystickSingleController * joystick = NewObject<UJoystickSingleController>(this);
-	joystick->Init(player, LatestFrame[player], Joysticks[player]);
-	return joystick;
+	if (player < 0 || player >= Joysticks.Num()) return FJoystickInfo();
+	return Joysticks[player];
 }
 
+FJoystickState AJoystickPluginActor::GetLatestFrame(int32 player)
+{
+	if (player < 0 || player >= Joysticks.Num()) return FJoystickState();
+	return LatestFrame[player];
+}
 int32 AJoystickPluginActor::JoystickCount()
 {
 	return Joysticks.Num();

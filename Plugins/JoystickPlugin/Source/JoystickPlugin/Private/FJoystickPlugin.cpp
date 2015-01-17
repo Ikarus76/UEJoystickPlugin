@@ -79,42 +79,43 @@ void FJoystickPlugin::SetDelegate(JoystickDelegate* newDelegate)
 		//Start case, if we started the plugin with a joystick already plugged in
 		joystickDelegate->Joysticks = joysticks;
 		for (auto &joystick : joysticks)
-			JoystickPluggedIn(joystick);
+			joystickDelegate->JoystickPluggedIn(joystick);
 	}
 }
 
-void FJoystickPlugin::JoystickPluggedIn(const JoystickInfo & joystick)
+void FJoystickPlugin::JoystickPluggedIn(FJoystickInfo & joystick)
 {
 	// First try to find the same joystick if it was connected before (to get the same index)
-	int player = joysticks.IndexOfByPredicate([&](const JoystickInfo &j) { return j.InstanceId == joystick.InstanceId; });
-	if (player == INDEX_NONE)
+	joystick.Player = joysticks.IndexOfByPredicate([&](const FJoystickInfo &j) { return j.InstanceId == joystick.InstanceId; });
+	if (joystick.Player == INDEX_NONE)
 	{
 		// Otherwise try to find an unused slot
-		player = joysticks.IndexOfByPredicate([&](const JoystickInfo &j) { return j.Connected == false; });
+		joystick.Player = joysticks.IndexOfByPredicate([&](const FJoystickInfo &j) { return j.Connected == false; });
 	}
 
-	if (player == INDEX_NONE)
+	if (joystick.Player == INDEX_NONE)
 	{
 		// Finally add a now slot
-		player = joysticks.Add(joystick);
-		prevData.Add(JoystickData());
-		currData.Add(JoystickData());
+		joystick.Player = joysticks.Add(joystick);
+		joysticks[joystick.Player].Player = joystick.Player;
+		prevData.Add(FJoystickState(joystick.Player));
+		currData.Add(FJoystickState(joystick.Player));
 	}
 	else
 	{
-		joysticks[player] = joystick;
+		joysticks[joystick.Player] = joystick;
 	}
 
 	if (joystickDelegate)
 	{
 		joystickDelegate->Joysticks = joysticks;
-		joystickDelegate->JoystickPluggedIn(player);
+		joystickDelegate->JoystickPluggedIn(joystick);
 	}
 }
 
-void FJoystickPlugin::JoystickUnplugged(GUID id)
+void FJoystickPlugin::JoystickUnplugged(FGuid id)
 {
-	int player = joysticks.IndexOfByPredicate([&](const JoystickInfo &j) { return j.InstanceId == id; });
+	int player = joysticks.IndexOfByPredicate([&](const FJoystickInfo &j) { return j.InstanceId == id; });
 	if (player == INDEX_NONE)
 	{
 		// Can happen e.g. if we fail to acquire a joystick
@@ -129,7 +130,7 @@ void FJoystickPlugin::JoystickUnplugged(GUID id)
 	if (joystickDelegate)
 	{
 		// Let joystick state return to zero
-		joystickDelegate->JoystickUnplugged(player);
+		joystickDelegate->JoystickUnplugged(joysticks[player]);
 	}
 }
 
@@ -141,8 +142,8 @@ void FJoystickPlugin::JoystickTick(float DeltaTime)
 			continue;
 
 		//get the freshest data
-		JoystickData newJoyData;
-		if (GetDeviceState(newJoyData, joysticks[i].InstanceId))
+		FJoystickState newJoyData(i);
+		if (GetDeviceState(newJoyData, ToGUID(joysticks[i].InstanceId)))
 		{
 			prevData[i] = currData[i];
 			currData[i] = newJoyData;
@@ -224,14 +225,14 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 				if (currBitmask & bitVal)
 				{
 					if (joystickDelegate)
-						joystickDelegate->JoystickButtonPressed(i + 1, p);
+						joystickDelegate->JoystickButtonPressed(i + 1, current);
 					if (i < EKeysJoystick::MaxJoystickButtons)
 						EmitKeyDownEventForKey(EKeysJoystick::JoystickButton[i], p, 0);
 				}
 				else
 				{
 					if (joystickDelegate)
-						joystickDelegate->JoystickButtonReleased(i + 1, p);
+						joystickDelegate->JoystickButtonReleased(i + 1, current);
 					if (i < EKeysJoystick::MaxJoystickButtons)
 						EmitKeyUpEventForKey(EKeysJoystick::JoystickButton[i], p, 0);
 				}
@@ -242,7 +243,7 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 		if (current.Axis != prev.Axis)
 		{
 			if (joystickDelegate)
-				joystickDelegate->AxisChanged(current.Axis, p);
+				joystickDelegate->AxisChanged(current.Axis, current);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisX, current.Axis.X, p, 0);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisY, current.Axis.Y, p, 0);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickAxisZ, current.Axis.Z, p, 0);
@@ -252,7 +253,7 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 		if (current.RAxis != prev.RAxis)
 		{
 			if (joystickDelegate)
-				joystickDelegate->RAxisChanged(current.Axis, p);
+				joystickDelegate->RAxisChanged(current.Axis, current);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisX, current.RAxis.X, p, 0);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisY, current.RAxis.Y, p, 0);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickRAxisZ, current.RAxis.Z, p, 0);
@@ -263,7 +264,7 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 			if (current.POV[i] != prev.POV[i])
 			{
 				if (joystickDelegate)
-					joystickDelegate->POVChanged(current.POV[i], i, p);
+					joystickDelegate->POVChanged(current.POV[i], i, current);
 				FVector2D direction = POVAxis(current.POV[i]);
 				EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOVX[i], direction.X, p, 0);
 				EmitAnalogInputEventForKey(EKeysJoystick::JoystickPOVY[i], direction.Y, p, 0);
@@ -274,7 +275,7 @@ void FJoystickPlugin::DelegateTick(float DeltaTime)
 		if (current.Slider != prev.Slider)
 		{
 			if (joystickDelegate)
-				joystickDelegate->SliderChanged(current.Slider, p);
+				joystickDelegate->SliderChanged(current.Slider, current);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider[0], current.Slider.X, p, 0);
 			EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider[1], current.Slider.Y, p, 0);
 		}

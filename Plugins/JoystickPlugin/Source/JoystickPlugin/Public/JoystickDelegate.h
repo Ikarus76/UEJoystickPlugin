@@ -22,41 +22,22 @@ struct EKeysJoystick
 	static const FKey JoystickSlider[2];
 };
 
-FVector2D POVAxis(JoystickPOVDirection povValue);
-
-struct JoystickData {
-	uint64 buttonsPressedL;
-	uint64 buttonsPressedH;
-	FVector Axis;
-	FVector RAxis;
-	JoystickPOVDirection POV[4];
-	FVector2D Slider;
-};
-
-struct JoystickInfo {
-	GUID InstanceId;
-	GUID ProductId;
-	FName ProductName;
-	FName InstanceName;
-	bool Connected;
-};
-
 class JoystickDelegate
 {
 	friend class FJoystickPlugin;
 public:
 	virtual ~JoystickDelegate() {}
 
-	virtual void JoystickButtonPressed(int32 ButtonVal, int32 player);
-	virtual void JoystickButtonReleased(int32 ButtonVal, int32 player);
-	virtual void AxisChanged(FVector vector, int32 player);
-	virtual void RAxisChanged(FVector vector, int32 player);
-	virtual void POVChanged(JoystickPOVDirection Value, int32 index, int32 player);
-	virtual void SliderChanged(FVector2D Value, int32 player);
+	virtual void JoystickButtonPressed(int32 ButtonVal, const FJoystickState &state);
+	virtual void JoystickButtonReleased(int32 ButtonVal, const FJoystickState &state);
+	virtual void AxisChanged(FVector vector, const FJoystickState &state);
+	virtual void RAxisChanged(FVector vector, const FJoystickState &state);
+	virtual void POVChanged(JoystickPOVDirection Value, int32 index, const FJoystickState &state);
+	virtual void SliderChanged(FVector2D Value, const FJoystickState &state);
 
 	//JoystickHotPlugInterface events
-	virtual void JoystickPluggedIn(int32 player);
-	virtual void JoystickUnplugged(int32 player);
+	virtual void JoystickPluggedIn(const FJoystickInfo &info);
+	virtual void JoystickUnplugged(const FJoystickInfo &info);
 
 	virtual bool JoystickIsAvailable();
 
@@ -71,8 +52,8 @@ public:
 protected:
 	UObject* ValidSelfPointer;	//REQUIRED: has to be set before HydraStartup by a UObject subclass
 
-	TArray<JoystickData> LatestFrame;
-	TArray<JoystickInfo> Joysticks;
+	TArray<FJoystickState> LatestFrame;
+	TArray<FJoystickInfo> Joysticks;
 
 private:
 	UObject* _interfaceDelegate;

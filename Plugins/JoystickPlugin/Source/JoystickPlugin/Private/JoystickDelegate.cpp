@@ -2,7 +2,6 @@
 
 #include "JoystickPluginPrivatePCH.h"
 #include "JoystickDelegate.h"
-#include "JoystickSingleController.h"
 #include "IJoystickPlugin.h"
 
 const FKey EKeysJoystick::JoystickButton[32] = {
@@ -67,78 +66,52 @@ const FKey EKeysJoystick::JoystickSlider[] {
 		FKey("JoystickSlider2")
 };
 
-FVector2D POVAxis(JoystickPOVDirection povValue)
-{
-	switch (povValue){
-	case DIRECTION_NONE:
-		return FVector2D(0, 0);
-	case DIRECTION_UP:
-		return FVector2D(0, 1);
-	case DIRECTION_UP_RIGHT:
-		return FVector2D(1, 1);
-	case DIRECTION_RIGHT:
-		return FVector2D(1, 0);
-	case DIRECTION_DOWN_RIGHT:
-		return FVector2D(1, -1);
-	case DIRECTION_DOWN:
-		return FVector2D(0, -1);
-	case DIRECTION_DOWN_LEFT:
-		return FVector2D(-1, -1);
-	case DIRECTION_LEFT:
-		return FVector2D(-1, 0);
-	case DIRECTION_UP_LEFT:
-		return FVector2D(-1, 1);
-	default:
-		return FVector2D(0, 0);
-	}
-}
-
 /** Empty Event Functions, no Super call required, because they don't do anything! */
-void JoystickDelegate::JoystickButtonPressed(int32 buttonNr, int32 player)
+void JoystickDelegate::JoystickButtonPressed(int32 buttonNr, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickButtonPressed(_interfaceDelegate, buttonNr, player);
+		IJoystickInterface::Execute_JoystickButtonPressed(_interfaceDelegate, buttonNr, state);
 }
 
-void JoystickDelegate::JoystickButtonReleased(int32 buttonNr, int32 player)
+void JoystickDelegate::JoystickButtonReleased(int32 buttonNr, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickButtonReleased(_interfaceDelegate, buttonNr, player);
+		IJoystickInterface::Execute_JoystickButtonReleased(_interfaceDelegate, buttonNr, state);
 }
 
-void JoystickDelegate::AxisChanged(FVector AxisValue, int32 player)
+void JoystickDelegate::AxisChanged(FVector AxisValue, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickAxisChanged(_interfaceDelegate, AxisValue, player);
+		IJoystickInterface::Execute_JoystickAxisChanged(_interfaceDelegate, AxisValue, state);
 }
 
-void JoystickDelegate::RAxisChanged(FVector AxisValue, int32 player)
+void JoystickDelegate::RAxisChanged(FVector AxisValue, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickRAxisChanged(_interfaceDelegate, AxisValue, player);
+		IJoystickInterface::Execute_JoystickRAxisChanged(_interfaceDelegate, AxisValue, state);
 }
 
-void JoystickDelegate::POVChanged(JoystickPOVDirection POVValue, int32 index, int32 player)
+void JoystickDelegate::POVChanged(JoystickPOVDirection POVValue, int32 index, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickPOVChanged(_interfaceDelegate, POVValue, index, player);
+		IJoystickInterface::Execute_JoystickPOVChanged(_interfaceDelegate, POVValue, index, state);
 }
 
-void JoystickDelegate::SliderChanged(FVector2D SliderValue, int32 player)
+void JoystickDelegate::SliderChanged(FVector2D SliderValue, const FJoystickState &state)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickSliderChanged(_interfaceDelegate, SliderValue, player);
+		IJoystickInterface::Execute_JoystickSliderChanged(_interfaceDelegate, SliderValue, state);
 }
 
-void JoystickDelegate::JoystickPluggedIn(int32 player)
+void JoystickDelegate::JoystickPluggedIn(const FJoystickInfo &info)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickPluggedIn(_interfaceDelegate, player);
+		IJoystickInterface::Execute_JoystickPluggedIn(_interfaceDelegate, info);
 }
-void JoystickDelegate::JoystickUnplugged(int32 player)
+void JoystickDelegate::JoystickUnplugged(const FJoystickInfo &info)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickUnplugged(_interfaceDelegate, player);
+		IJoystickInterface::Execute_JoystickUnplugged(_interfaceDelegate, info);
 }
 
 bool JoystickDelegate::implementsInterface()

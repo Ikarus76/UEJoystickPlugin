@@ -10,8 +10,8 @@ public:
 	{
 	}
 
-	virtual void JoystickPluggedIn(const JoystickInfo &joystick) = 0;
-	virtual void JoystickUnplugged(GUID id) = 0;
+	virtual void JoystickPluggedIn(FJoystickInfo &joystick) = 0;
+	virtual void JoystickUnplugged(FGuid id) = 0;
 };
 
 class FJoystickPlugin : public IJoystickPlugin, public JoystickHotPlugInterface
@@ -34,14 +34,14 @@ private:
 	JoystickDelegate* joystickDelegate = nullptr;
 	void* DLLHandle;
 
-	TArray<JoystickData> currData;
-	TArray<JoystickData> prevData;
+	TArray<FJoystickState> currData;
+	TArray<FJoystickState> prevData;
 
-	TArray<JoystickInfo> joysticks;
+	TArray<FJoystickInfo> joysticks;
 
 	//Delegate Private functions
 	void DelegateTick(float DeltaTime);
 
-	void JoystickPluggedIn(const JoystickInfo &joystick) override;
-	void JoystickUnplugged(GUID id) override;
+	void JoystickPluggedIn(FJoystickInfo &joystick) override;
+	void JoystickUnplugged(FGuid id) override;
 };

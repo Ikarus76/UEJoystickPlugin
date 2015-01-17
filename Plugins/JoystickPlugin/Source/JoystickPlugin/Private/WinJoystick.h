@@ -45,6 +45,20 @@ inline uint32 GetTypeHash(const GUID guid)
 	return HashCombine(GetTypeHash(data[0]), GetTypeHash(data[1]));
 }
 
+inline FGuid ToFGuid(GUID g) 
+{
+	FGuid guid;
+	memcpy(&guid, &g, sizeof(FGuid));
+	return guid;
+}
+
+inline GUID ToGUID(FGuid g)
+{
+	GUID guid;
+	memcpy(&guid, &g, sizeof(FGuid));
+	return guid;
+}
+
 namespace {
 	struct XINPUT_DEVICE_NODE {
 		DWORD dwVidPid;
@@ -55,7 +69,7 @@ namespace {
 	LPDIRECTINPUT8          g_pDI = nullptr;
 
 	TMap<GUID, LPDIRECTINPUTDEVICE8> g_JoystickDevices;
-	TMap<GUID, JoystickInfo> g_PluggedIn;
+	TMap<GUID, FJoystickInfo> g_PluggedIn;
 
 	//FF
 	HWND					g_hWndFF;
@@ -428,7 +442,7 @@ namespace {
 			if (!g_PluggedIn.Contains(joystick.Key))
 			{
 				if (hpDelegate)
-					hpDelegate->JoystickUnplugged(joystick.Key);
+					hpDelegate->JoystickUnplugged(ToFGuid(joystick.Key));
 				g_JoystickDevices.Remove(joystick.Key);
 			}
 		}
@@ -730,8 +744,8 @@ namespace {
 			return DIENUM_CONTINUE;
 
 		auto & joystick = g_PluggedIn.Add(pdidInstance->guidInstance);
-		joystick.InstanceId = pdidInstance->guidInstance;
-		joystick.ProductId = pdidInstance->guidProduct;
+		joystick.InstanceId = ToFGuid(pdidInstance->guidInstance);
+		joystick.ProductId = ToFGuid(pdidInstance->guidProduct);
 		joystick.ProductName = pdidInstance->tszProductName;
 		joystick.InstanceName = pdidInstance->tszInstanceName;
 		joystick.Connected = true;
@@ -869,7 +883,7 @@ namespace {
 		}
 	}
 
-	BOOL GetDeviceState(JoystickData & joyData, GUID id)
+	BOOL GetDeviceState(FJoystickState & joyData, GUID id)
 	{
 		LPDIRECTINPUTDEVICE8 joystick = g_JoystickDevices[id];
 		DIJOYSTATE2 js;				// DInput joystick state  
