@@ -46,18 +46,18 @@ void FJoystickPlugin::StartupModule()
 
 				// create FKeyDetails for axis
 				for (int iAxis = 0; iAxis < newDeviceState.NumberOfAxis; iAxis++) {
-					FText textValue = FText::Format(LOCTEXT("DeviceButton", "Device {0} Axis {1}"), FText::AsNumber(iDevice), FText::AsNumber(iAxis));
-
-					UE_LOG(JoystickPluginLog, Log, TEXT("add Axis: %s"), *textValue.ToString());
-
+					FText textValue = FText::Format(LOCTEXT("DeviceAxis", "Device {0} Axis {1}"), FText::AsNumber(iDevice), FText::AsNumber(iAxis));
+					
 					FString strName("Device");
 					strName.Append(FString::FromInt(iDevice));
 					strName.Append("Axis");
 					strName.Append(FString::FromInt(iAxis));
 
-					g_DeviceAxisKeys.Add(FKey(FName(*textValue.ToString())));
+					UE_LOG(JoystickPluginLog, Log, TEXT("add Axis: %s"), *textValue.ToString());
+
+					g_DeviceAxisKeys.Add(FKey(FName(*strName)));
 					
-					EKeys::AddKey(FKeyDetails(g_DeviceAxisKeys[iAxis], textValue, FKeyDetails::FloatAxis));
+					EKeys::AddKey(FKeyDetails(g_DeviceAxisKeys[iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
 					
 				}
 
@@ -65,12 +65,12 @@ void FJoystickPlugin::StartupModule()
 				for (int iButton = 0; iButton < newDeviceState.NumberOfButtons; iButton++) {
 					FText textValue = FText::Format(LOCTEXT("DeviceButton", "Device {0} Button {1}"), FText::AsNumber(iDevice), FText::AsNumber(iButton));
 
-					UE_LOG(JoystickPluginLog, Log, TEXT("add Button: %s"), *textValue.ToString());
-
 					FString strName("Device");
 					strName.Append(FString::FromInt(iDevice));
 					strName.Append("Button");
 					strName.Append(FString::FromInt(iButton));
+
+					UE_LOG(JoystickPluginLog, Log, TEXT("add Button: %s"), *textValue.ToString());
 
 					g_DeviceButtonKeys.Add(FKey(FName(*strName)));
 
@@ -80,11 +80,13 @@ void FJoystickPlugin::StartupModule()
 				// create FKeyDetails for hats
 				for (int iHat = 0; iHat < newDeviceState.NumberOfHats; iHat++) {
 					FText textValue = FText::Format(LOCTEXT("DeviceHat", "Device {0} Hat {1}"), FText::AsNumber(iDevice), FText::AsNumber(iHat));
-
+					
 					FString strName("Device");
 					strName.Append(FString::FromInt(iDevice));
 					strName.Append("Hat");
 					strName.Append(FString::FromInt(iHat));
+
+					UE_LOG(JoystickPluginLog, Log, TEXT("add Hat: %s"), *textValue.ToString());
 
 					g_DeviceHatKeys.Add(FKey(FName(*strName)));
 
@@ -94,11 +96,13 @@ void FJoystickPlugin::StartupModule()
 				// create FKeyDetails for balls
 				for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++) {
 					FText textValue = FText::Format(LOCTEXT("DeviceBall", "Device {0} Ball {1}"), FText::AsNumber(iDevice), FText::AsNumber(iBall));
-
+					
 					FString strName("Device");
 					strName.Append(FString::FromInt(iDevice));
 					strName.Append("Ball");
 					strName.Append(FString::FromInt(iBall));
+
+					UE_LOG(JoystickPluginLog, Log, TEXT("add Ball/Slider: %s"), *textValue.ToString());
 
 					g_DeviceBallKeys.Add(FKey(FName(*strName)));
 
