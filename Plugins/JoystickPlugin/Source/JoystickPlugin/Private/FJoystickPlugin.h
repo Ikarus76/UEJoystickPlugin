@@ -1,8 +1,16 @@
 #pragma once
 
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
 class DataCollector;
 class JoystickDelegate;
 class DeviceSDL;
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
 
 class JoystickHotPlugInterface
 {
@@ -11,8 +19,8 @@ public:
 	{
 	}
 
-	virtual void JoystickPluggedIn(FJoystickInfo &joystick) = 0;
-	virtual void JoystickUnplugged(FGuid id) = 0;
+	virtual void JoystickPluggedIn(int32 iDevice) = 0;
+	virtual void JoystickUnplugged(int32 iDevice) = 0;
 };
 
 class FJoystickPlugin : public IJoystickPlugin, public JoystickHotPlugInterface
@@ -32,8 +40,11 @@ public:
 
 	bool JoystickIsAvailable() override;
 	
-	void JoystickPluggedIn(FJoystickInfo &joystick) override;
-	void JoystickUnplugged(FGuid id) override;
+	void JoystickPluggedIn(int32 iDevice) override;
+	void JoystickUnplugged(int32 iDevice) override;
+
+	bool AddInputDevice(int iDevice);
+	bool RemoveInputDevice(int iDevice);
 
 private:
 
@@ -46,10 +57,13 @@ private:
 	TArray<FJoystickState> currData;
 	TArray<FJoystickState> prevData;
 
-	TArray<FJoystickInfo> joysticks;
+	TArray<FJoystickInfo> m_InputDevices;
 
 	//Delegate Private functions
 	void DelegateTick(float DeltaTime);
 
-
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////

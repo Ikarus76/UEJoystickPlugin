@@ -66,10 +66,10 @@
 //		FKey("JoystickSlider2")
 //};
 
-TArray<FKey> g_DeviceButtonKeys;
-TArray<FKey> g_DeviceAxisKeys;
-TArray<FKey> g_DeviceHatKeys;
-TArray<FKey> g_DeviceBallKeys;
+TArray<FKey> g_DeviceButtonKeys[MAX_JOYSTICKCOUNT];
+TArray<FKey> g_DeviceAxisKeys[MAX_JOYSTICKCOUNT];
+TArray<FKey> g_DeviceHatKeys[MAX_JOYSTICKCOUNT];
+TArray<FKey> g_DeviceBallKeys[MAX_JOYSTICKCOUNT];
 
 /** Empty Event Functions, no Super call required, because they don't do anything! */
 void JoystickDelegate::JoystickButtonPressed(int32 buttonNr, const FJoystickState &state)
@@ -156,15 +156,15 @@ void JoystickDelegate::BallsArrayChanged(int32 index, float value, const FJoysti
 //		IJoystickInterface::Execute_JoystickSliderChanged(_interfaceDelegate, SliderValue, state);
 //}
 
-void JoystickDelegate::JoystickPluggedIn(const FJoystickInfo &info)
+void JoystickDelegate::JoystickPluggedIn(int32 iDevice)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickPluggedIn(_interfaceDelegate, info);
+		IJoystickInterface::Execute_JoystickPluggedIn(_interfaceDelegate, iDevice);
 }
-void JoystickDelegate::JoystickUnplugged(const FJoystickInfo &info)
+void JoystickDelegate::JoystickUnplugged(int32 iDevice)
 {
 	if (implementsInterface())
-		IJoystickInterface::Execute_JoystickUnplugged(_interfaceDelegate, info);
+		IJoystickInterface::Execute_JoystickUnplugged(_interfaceDelegate, iDevice);
 }
 
 bool JoystickDelegate::implementsInterface()
@@ -239,4 +239,5 @@ void JoystickDelegate::JoystickTick(float DeltaTime)
 		//Required to Work - This is the plugin magic
 		IJoystickPlugin::Get().JoystickTick(DeltaTime);
 	}
+
 }

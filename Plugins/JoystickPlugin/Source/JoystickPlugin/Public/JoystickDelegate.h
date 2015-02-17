@@ -1,31 +1,19 @@
 #pragma once
 
 #include "JoystickInterface.h"
-//
-////Input Mapping Keys
-//struct EKeysJoystick
-//{
-//	static const int MaxJoystickButtons = 32;
-//	static const FKey JoystickButton[MaxJoystickButtons];
-//
-//	static const FKey JoystickAxisX;
-//	static const FKey JoystickAxisY;
-//	static const FKey JoystickAxisZ;
-//
-//	static const FKey JoystickRAxisX;
-//	static const FKey JoystickRAxisY;
-//	static const FKey JoystickRAxisZ;
-//
-//	static const FKey JoystickPOVX[4];
-//	static const FKey JoystickPOVY[4];
-//
-//	static const FKey JoystickSlider[2];
-//};
 
-extern TArray<FKey> g_DeviceButtonKeys;
-extern TArray<FKey> g_DeviceAxisKeys;
-extern TArray<FKey> g_DeviceHatKeys;
-extern TArray<FKey> g_DeviceBallKeys;
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
+extern TArray<FKey> g_DeviceButtonKeys[MAX_JOYSTICKCOUNT];
+extern TArray<FKey> g_DeviceAxisKeys[MAX_JOYSTICKCOUNT];
+extern TArray<FKey> g_DeviceHatKeys[MAX_JOYSTICKCOUNT];
+extern TArray<FKey> g_DeviceBallKeys[MAX_JOYSTICKCOUNT];
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
 
 class JoystickDelegate
 {
@@ -47,8 +35,8 @@ public:
 	//virtual void SliderChanged(FVector2D Value, const FJoystickState &state);
 
 	//JoystickHotPlugInterface events
-	virtual void JoystickPluggedIn(const FJoystickInfo &info);
-	virtual void JoystickUnplugged(const FJoystickInfo &info);
+	virtual void JoystickPluggedIn(int32 iDevice);
+	virtual void JoystickUnplugged(int32 iDevice);
 
 	virtual bool JoystickIsAvailable();
 
@@ -71,3 +59,7 @@ private:
 	UObject* _interfaceDelegate;
 	bool implementsInterface();
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////

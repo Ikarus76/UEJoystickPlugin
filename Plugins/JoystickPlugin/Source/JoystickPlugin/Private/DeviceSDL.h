@@ -39,6 +39,8 @@ DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 //
 //////////////////////////////////////////////////////////////////////
 
+#define MAX_CONTROLLED_DEVICES 16
+
 extern JoystickHotPlugInterface* g_HotPlugDelegate;
 
 //////////////////////////////////////////////////////////////////////
@@ -61,19 +63,43 @@ typedef TSharedRef<class CG221InputDeviceSDL> CG221InputDeviceRef;
 //
 //////////////////////////////////////////////////////////////////////
 
+struct sDeviceInfoSDL
+{
+	int deviceNumber = -1;
+
+	bool isConnected = false;
+
+	FString strName;
+	
+	bool isGameController = false;
+	bool isJoystick = false;
+	bool hasHaptic = false;
+
+	SDL_Haptic *haptic = NULL;
+	SDL_Joystick *joystick = NULL;
+	SDL_GameController *gameController = NULL;
+};
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
 class DeviceSDL
 {
 
 public:
-	int32 getNumberOfJoysticks();
+	int32 getNumberOfDevices();
 	
 	int32 getNumberOfAxes(int32 InputDeviceIndex = 0);
 	int32 getNumberOfButtons(int32 InputDeviceIndex = 0);
 	int32 getNumberOfHats(int32 InputDeviceIndex = 0);
 	int32 getNumberOfBalls(int32 InputDeviceIndex = 0);
 
-	bool getDeviceState(FJoystickState &InputData, int32 InputDeviceIndex = 0);
+	bool getDeviceSDL(int32 iDevice, sDeviceInfoSDL &deviceInfo);
+	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, int32 InputDeviceIndex = 0);
+
 	FString getDeviceName(int32 InputDeviceIndex = 0);
+
 	Sint32 getDeviceInstanceId(int32 InputDeviceIndex = 0);
 	FString getDeviceGUIDtoString(int32 InputDeviceIndex = 0);
 	FGuid getDeviceGUIDtoGUID(int32 InputDeviceIndex = 0);
@@ -97,7 +123,15 @@ public:
 	//	GUID guid;
 	//	memcpy(&guid, &g, sizeof(FGuid));
 	//	return guid;
-	//}
+	//}	
+	
+	void resetDevices();
+	void resetDevice(int iDevice);
+
+	bool initDevices();
+	bool initDevice(int deviceNumber, sDeviceInfoSDL &deviceInfo);
+	sDeviceInfoSDL * getDevice(int iDevice = 0);
+	bool doneDevice(sDeviceInfoSDL &deviceInfo);
 
 	void update(float DeltaTime);
 
@@ -105,17 +139,19 @@ public:
 	virtual ~DeviceSDL();
 
 protected:
-	void InitSDL();
-	void DoneSDL();
+	void initSDL();
+	void doneSDL();
 
 private:
-	SDL_Joystick *m_Joysticks[8];
-	SDL_GameController *m_GameController[8];
+	bool hasJoysticks;
+	bool hasGameController;
+	bool hasHaptic;
 
-	//tCG221InputObjectArray m_InputObjects;
-	int m_NumberOfJoysticks;
+	sDeviceInfoSDL m_Devices[MAX_CONTROLLED_DEVICES];	
+	
+	int m_NumberOfDevices;
 
-	SDL_Event m_SDL_Event;
+	SDL_Event m_Event_SDL;
 };
 
 //////////////////////////////////////////////////////////////////////
