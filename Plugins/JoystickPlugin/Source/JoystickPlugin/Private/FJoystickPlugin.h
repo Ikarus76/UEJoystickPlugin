@@ -2,6 +2,7 @@
 
 class DataCollector;
 class JoystickDelegate;
+class DeviceSDL;
 
 class JoystickHotPlugInterface
 {
@@ -29,7 +30,15 @@ public:
 
 	void ForceFeedbackXY(int32 x, int32 y, float magnitudeScale) override;
 
+	bool JoystickIsAvailable() override;
+	
+	void JoystickPluggedIn(FJoystickInfo &joystick) override;
+	void JoystickUnplugged(FGuid id) override;
+
 private:
+
+	DeviceSDL *m_DeviceSDL;
+
 	DataCollector *m_pCollector;
 	JoystickDelegate* joystickDelegate = nullptr;
 	void* DLLHandle;
@@ -42,6 +51,5 @@ private:
 	//Delegate Private functions
 	void DelegateTick(float DeltaTime);
 
-	void JoystickPluggedIn(FJoystickInfo &joystick) override;
-	void JoystickUnplugged(FGuid id) override;
+
 };
