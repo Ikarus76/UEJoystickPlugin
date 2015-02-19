@@ -66,10 +66,10 @@
 //		FKey("JoystickSlider2")
 //};
 
-TArray<FKey> g_DeviceButtonKeys[MAX_JOYSTICKCOUNT];
-TArray<FKey> g_DeviceAxisKeys[MAX_JOYSTICKCOUNT];
-TArray<FKey> g_DeviceHatKeys[MAX_JOYSTICKCOUNT];
-TArray<FKey> g_DeviceBallKeys[MAX_JOYSTICKCOUNT];
+TMap<DeviceId, TArray<FKey>> g_DeviceButtonKeys;
+TMap<DeviceId, TArray<FKey>> g_DeviceAxisKeys;
+TMap<DeviceId, TArray<FKey>> g_DeviceHatKeys;
+TMap<DeviceId, TArray<FKey>> g_DeviceBallKeys;
 
 /** Empty Event Functions, no Super call required, because they don't do anything! */
 void JoystickDelegate::JoystickButtonPressed(int32 buttonNr, const FJoystickState &state)
@@ -126,10 +126,10 @@ void JoystickDelegate::HatsArrayChanged(int32 index, float value, const FJoystic
 //
 //////////////////////////////////////////////////////////////////////
 
-void JoystickDelegate::BallsArrayChanged(int32 index, float value, const FJoystickState &state)
+void JoystickDelegate::BallsArrayChanged(int32 index, int32 dx, int32 dy, const FJoystickState &state)
 {
 	if (implementsInterface()) {
-		IJoystickInterface::Execute_JoystickBallsArrayChanged(_interfaceDelegate, index, value, state);
+		IJoystickInterface::Execute_JoystickBallsArrayChanged(_interfaceDelegate, index, dx, dy, state);
 	}
 }
 

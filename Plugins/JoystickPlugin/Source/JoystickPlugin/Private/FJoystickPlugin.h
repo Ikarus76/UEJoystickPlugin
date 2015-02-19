@@ -12,18 +12,22 @@ class DeviceSDL;
 //
 //////////////////////////////////////////////////////////////////////
 
-class JoystickHotPlugInterface
+class JoystickEventInterface
 {
 public:
-	virtual ~JoystickHotPlugInterface()
+	virtual ~JoystickEventInterface()
 	{
 	}
 
-	virtual void JoystickPluggedIn(int32 iDevice) = 0;
-	virtual void JoystickUnplugged(int32 iDevice) = 0;
+	virtual void JoystickPluggedIn(DeviceIndex iDevice) = 0;
+	virtual void JoystickUnplugged(DeviceId iDevice) = 0;
+	virtual void JoystickButton(DeviceId iDevice, int32 button, bool pressed) = 0;
+	virtual void JoystickAxis(DeviceId iDevice, int32 axis, float value) = 0;
+	virtual void JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirection value) = 0;
+	virtual void JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy) = 0;
 };
 
-class FJoystickPlugin : public IJoystickPlugin, public JoystickHotPlugInterface
+class FJoystickPlugin : public IJoystickPlugin, public JoystickEventInterface
 {
 public:
 	/** IModuleInterface implementation */
@@ -40,11 +44,15 @@ public:
 
 	bool JoystickIsAvailable() override;
 	
-	void JoystickPluggedIn(int32 iDevice) override;
-	void JoystickUnplugged(int32 iDevice) override;
+	void JoystickPluggedIn(DeviceIndex iDevice) override;
+	void JoystickUnplugged(DeviceId iDevice) override;
+	void JoystickButton(DeviceId iDevice, int32 button, bool pressed) override;
+	void JoystickAxis(DeviceId iDevice, int32 axis, float value) override;
+	void JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirection value) override;
+	void JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy) override;
 
-	bool AddInputDevice(int iDevice);
-	bool RemoveInputDevice(int iDevice);
+	bool AddInputDevice(DeviceId iDevice);
+	bool RemoveInputDevice(DeviceId iDevice);
 
 private:
 
@@ -54,14 +62,10 @@ private:
 	JoystickDelegate* joystickDelegate = nullptr;
 	void* DLLHandle;
 
-	TArray<FJoystickState> currData;
-	TArray<FJoystickState> prevData;
+	TMap<DeviceId, FJoystickState> currData;
+	TMap<DeviceId, FJoystickState> prevData;
 
-	TArray<FJoystickInfo> m_InputDevices;
-
-	//Delegate Private functions
-	void DelegateTick(float DeltaTime);
-
+	TMap<DeviceId, FJoystickInfo> m_InputDevices;
 };
 
 //////////////////////////////////////////////////////////////////////
