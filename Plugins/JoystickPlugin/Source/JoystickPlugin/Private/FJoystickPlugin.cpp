@@ -32,13 +32,13 @@ void FJoystickPlugin::StartupModule()
 	
 	g_HotPlugDelegate = this;
 
-	if (m_DeviceSDL != nullptr) {
-		UE_LOG(JoystickPluginLog, Log, TEXT("Attempting to add devices..."));
+	/*if (m_DeviceSDL != nullptr) {
+		UE_LOG(JoystickPluginLog, Log, TEXT("Add already connected devices"));
 
 		for (int iDevice = 0; iDevice < m_DeviceSDL->getNumberOfDevices(); iDevice++) {
-			g_HotPlugDelegate->JoystickPluggedIn(iDevice);
+			g_HotPlugDelegate->JoystickPluggedIn(static_cast<DeviceIndex>(iDevice));
 		}
-	}
+	}*/
 	
 }
 
@@ -55,9 +55,9 @@ void FJoystickPlugin::ShutdownModule()
 
 		UE_LOG(JoystickPluginLog, Log, TEXT("Attempting to remove devices..."));
 
-		for (int iDevice = 0; iDevice < numJoysticks; iDevice++) {
-			RemoveInputDevice(iDevice);
-			g_HotPlugDelegate->JoystickUnplugged(iDevice);
+		for (auto const & device : m_InputDevices) {
+			RemoveInputDevice(device.Key);
+			g_HotPlugDelegate->JoystickUnplugged(device.Key);
 		}
 
 		delete m_DeviceSDL;
@@ -70,20 +70,21 @@ void FJoystickPlugin::ShutdownModule()
 //
 //////////////////////////////////////////////////////////////////////
 
-bool FJoystickPlugin::AddInputDevice(int iDevice)
+bool FJoystickPlugin::AddInputDevice(DeviceId iDevice)
 {
 	bool result = false;
 
 	sDeviceInfoSDL deviceInfoSDL;
 
-	if (m_InputDevices.IsValidIndex(iDevice)) {
-		UE_LOG(JoystickPluginLog, Log, TEXT("already an registered device %s %i"), *m_InputDevices[iDevice].DeviceName, iDevice);
+	if (m_InputDevices.Contains(iDevice)) {
+		UE_LOG(JoystickPluginLog, Log, TEXT("already an registered device %s %i"), *m_InputDevices[iDevice].DeviceName, (int)iDevice);
 	} else
 	if (m_DeviceSDL->getDeviceSDL(iDevice, deviceInfoSDL)) {
 		FJoystickInfo deviceInfo;
 
 		deviceInfo.Connected = deviceInfoSDL.isConnected;
-		deviceInfo.JoystickIndex = iDevice;
+		deviceInfo.DeviceId = (int)iDevice;
+		deviceInfo.Player = 0;
 
 		deviceInfo.InstanceId = m_DeviceSDL->getDeviceGUIDtoGUID(iDevice);
 		deviceInfo.ProductId = m_DeviceSDL->getDeviceGUIDtoGUID(iDevice);
@@ -95,13 +96,14 @@ bool FJoystickPlugin::AddInputDevice(int iDevice)
 
 		deviceInfo.IsGameController = deviceInfoSDL.isGameController;		
 
-		UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *strDeviceName, iDevice);
-		m_InputDevices.Add(deviceInfo);
+		UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *strDeviceName, (int)iDevice);
+		m_InputDevices.Add(iDevice, deviceInfo);
 
-		FJoystickState newDeviceState(iDevice);
+		FJoystickState newDeviceState((int)iDevice);
 		if (m_DeviceSDL->getDeviceState(newDeviceState, m_InputDevices[iDevice], iDevice)) {
 
 			// create FKeyDetails for axis
+			g_DeviceAxisKeys.Add(iDevice);
 			for (int iAxis = 0; iAxis < newDeviceState.NumberOfAxis; iAxis++) {
 				//FText textValue = FText::Format(LOCTEXT("DeviceAxis", "Device {0} Axis {1}"), FText::AsNumber(iDevice), FText::AsNumber(iAxis));
 
@@ -112,15 +114,17 @@ bool FJoystickPlugin::AddInputDevice(int iDevice)
 
 				FText textValue = FText::FromString(strName);
 
-				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *textValue.ToString(), iDevice);
+				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *textValue.ToString(), (int)iDevice);
 
 				g_DeviceAxisKeys[iDevice].Add(FKey(FName(*strName)));
-
-				EKeys::AddKey(FKeyDetails(g_DeviceAxisKeys[iDevice][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-
+				if (!EKeys::GetKeyDetails(g_DeviceAxisKeys[iDevice][iAxis]).IsValid())
+				{
+					EKeys::AddKey(FKeyDetails(g_DeviceAxisKeys[iDevice][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+				}
 			}
 
 			// create FKeyDetails for buttons
+			g_DeviceButtonKeys.Add(iDevice);
 			for (int iButton = 0; iButton < newDeviceState.NumberOfButtons; iButton++) {
 				//FText textValue = FText::Format(LOCTEXT("DeviceButton", "Device {0} Button {1}"), FText::AsNumber(iDevice), FText::AsNumber(iButton));
 
@@ -135,10 +139,14 @@ bool FJoystickPlugin::AddInputDevice(int iDevice)
 
 				g_DeviceButtonKeys[iDevice].Add(FKey(FName(*strName)));
 
-				EKeys::AddKey(FKeyDetails(g_DeviceButtonKeys[iDevice][iButton], textValue, FKeyDetails::GamepadKey));
+				if (!EKeys::GetKeyDetails(g_DeviceButtonKeys[iDevice][iButton]).IsValid())
+				{
+					EKeys::AddKey(FKeyDetails(g_DeviceButtonKeys[iDevice][iButton], textValue, FKeyDetails::GamepadKey));
+				}
 			}
 
 			// create FKeyDetails for hats
+			g_DeviceHatKeys.Add(iDevice);
 			for (int iHat = 0; iHat < newDeviceState.NumberOfHats; iHat++) {
 				//FText textValue = FText::Format(LOCTEXT("DeviceHat", "Device {0} Hat {1}"), FText::AsNumber(iDevice), FText::AsNumber(iHat));
 
@@ -153,29 +161,33 @@ bool FJoystickPlugin::AddInputDevice(int iDevice)
 
 				g_DeviceHatKeys[iDevice].Add(FKey(FName(*strName)));
 
-				EKeys::AddKey(FKeyDetails(g_DeviceHatKeys[iDevice][iHat], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+				if (!EKeys::GetKeyDetails(g_DeviceHatKeys[iDevice][iHat]).IsValid())
+				{
+					EKeys::AddKey(FKeyDetails(g_DeviceHatKeys[iDevice][iHat], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+				}
 			}
 
 			// create FKeyDetails for balls
-			for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++) {
-				//FText textValue = FText::Format(LOCTEXT("DeviceBall", "Device {0} Ball {1}"), FText::AsNumber(iDevice), FText::AsNumber(iBall));
+			//g_DeviceBallKeys.Add(iDevice);
+			//for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++) {
+			//	//FText textValue = FText::Format(LOCTEXT("DeviceBall", "Device {0} Ball {1}"), FText::AsNumber(iDevice), FText::AsNumber(iBall));
 
-				FString strName("Ball");
-				strName.Append(FString::FromInt(iBall));
-				strName.Append("_");
-				strName.Append(strDeviceName);
+			//	FString strName("Ball");
+			//	strName.Append(FString::FromInt(iBall));
+			//	strName.Append("_");
+			//	strName.Append(strDeviceName);
 
-				FText textValue = FText::FromString(strName);
+			//	FText textValue = FText::FromString(strName);
 
-				UE_LOG(JoystickPluginLog, Log, TEXT("add Ball/Slider: %s"), *textValue.ToString());
+			//	UE_LOG(JoystickPluginLog, Log, TEXT("add Ball/Slider: %s"), *textValue.ToString());
 
-				g_DeviceBallKeys[iDevice].Add(FKey(FName(*strName)));
+			//	g_DeviceBallKeys[iDevice].Add(FKey(FName(*strName)));
 
-				EKeys::AddKey(FKeyDetails(g_DeviceBallKeys[iDevice][iBall], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-			}
+			//	EKeys::AddKey(FKeyDetails(g_DeviceBallKeys[iDevice][iBall], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+			//}
 
-			prevData.Add(newDeviceState);
-			currData.Add(newDeviceState);
+			prevData.Add(iDevice, newDeviceState);
+			currData.Add(iDevice, newDeviceState);
 		}
 	}
 	
@@ -187,13 +199,13 @@ bool FJoystickPlugin::AddInputDevice(int iDevice)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool FJoystickPlugin::RemoveInputDevice(int iDevice)
+bool FJoystickPlugin::RemoveInputDevice(DeviceId iDevice)
 {
 	bool result = false;
-	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::RemoveDevice() not implemented"));
+	/*UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::RemoveDevice() not implemented"));
 	if (m_InputDevices.IsValidIndex(iDevice)) {
 		m_InputDevices.RemoveAt(iDevice, 1);
-	}
+	}*/
 	return result;
 }
 
@@ -216,15 +228,15 @@ void FJoystickPlugin::SetDelegate(JoystickDelegate* newDelegate)
 	joystickDelegate = newDelegate;
 	if (joystickDelegate) {		
 
-		joystickDelegate->Joysticks = m_InputDevices;
+		m_InputDevices.GenerateValueArray(joystickDelegate->Joysticks);
 	
-		if (m_DeviceSDL != nullptr) {
+		/*if (m_DeviceSDL != nullptr) {
 			UE_LOG(JoystickPluginLog, Log, TEXT("Attempting to add devices..."));
 
 			for (int iDevice = 0; iDevice < m_DeviceSDL->getNumberOfDevices(); iDevice++) {
 				AddInputDevice(iDevice);
 			}
-		}
+		}*/
 		//for (FJoystickInfo &joystick : m_InputDevice) {
 		//	//@BUG this is never called for sdl version
 		//	joystickDelegate->JoystickPluggedIn(joystick.JoystickIndex);
@@ -236,9 +248,9 @@ void FJoystickPlugin::SetDelegate(JoystickDelegate* newDelegate)
 //
 //////////////////////////////////////////////////////////////////////
 
-void FJoystickPlugin::JoystickPluggedIn(int32 iDevice)
+void FJoystickPlugin::JoystickPluggedIn(DeviceIndex iDevice)
 {
-	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), iDevice);
+	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), (int)iDevice);
 
 	if (m_DeviceSDL == NULL) {
 		return;
@@ -247,16 +259,16 @@ void FJoystickPlugin::JoystickPluggedIn(int32 iDevice)
 	sDeviceInfoSDL deviceInfoSDL;
 	if (m_DeviceSDL->initDevice(iDevice, deviceInfoSDL)) {
 		if (deviceInfoSDL.isConnected) {
-			if (AddInputDevice(iDevice)) {
-				UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), iDevice);
+			if (AddInputDevice(deviceInfoSDL.deviceId)) {
+				UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), (int)iDevice);
 			}
 			else {
-				UE_LOG(JoystickPluginLog, Log, TEXT("	FAILED add device %i"), iDevice);
+				UE_LOG(JoystickPluginLog, Log, TEXT("	FAILED add device %i"), (int)iDevice);
 			}
 		}
 
 	} else {
-		UE_LOG(JoystickPluginLog, Log, TEXT("!!WARNING!! no device %i found"), iDevice);
+		UE_LOG(JoystickPluginLog, Log, TEXT("!!WARNING!! no device %i found"), (int)iDevice);
 	}
 
 	//UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn %d"), joystick.Player);
@@ -293,17 +305,9 @@ void FJoystickPlugin::JoystickPluggedIn(int32 iDevice)
 //
 //////////////////////////////////////////////////////////////////////
 
-void FJoystickPlugin::JoystickUnplugged(int32 iDevice)
+void FJoystickPlugin::JoystickUnplugged(DeviceId iDevice)
 {
-	sDeviceInfoSDL deviceInfo;
-	
-	m_DeviceSDL->getNumberOfDevices();
-
-	if (m_DeviceSDL->getDeviceSDL(iDevice, deviceInfo)) {
-		if (deviceInfo.isConnected) {
-			m_DeviceSDL->doneDevice(deviceInfo);
-		}
-	}
+	m_DeviceSDL->doneDevice(iDevice);
 
 	//int player = m_Joysticks.IndexOfByPredicate([&](const FJoystickInfo &j) { return j.InstanceId == id; });
 	//if (player == INDEX_NONE)
@@ -322,30 +326,6 @@ void FJoystickPlugin::JoystickUnplugged(int32 iDevice)
 	//	// Let joystick state return to zero
 	//	joystickDelegate->JoystickUnplugged(m_Joysticks[player]);
 	//}
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-void FJoystickPlugin::JoystickTick(float DeltaTime)
-{
-	m_DeviceSDL->update(DeltaTime);
-	
-	for (int iDevice = 0; iDevice < m_InputDevices.Num(); iDevice++) {
-		if (m_InputDevices.IsValidIndex(iDevice)) {
-			if (m_InputDevices[iDevice].Connected) {
-				//get the freshest data
-				FJoystickState newDeviceData(iDevice);
-				if (m_DeviceSDL->getDeviceState(newDeviceData, m_InputDevices[iDevice], iDevice)) {
-					prevData[iDevice] = currData[iDevice];
-					currData[iDevice] = newDeviceData;
-				}
-			}
-		}
-	}
-
-	DelegateTick(DeltaTime);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -383,89 +363,69 @@ bool EmitAnalogInputEventForKey(FKey key, float value, int32 user, bool repeat)
 //
 //////////////////////////////////////////////////////////////////////
 
-/** Internal Tick - Called by the Plugin */
-void FJoystickPlugin::DelegateTick(float DeltaTime)
+void FJoystickPlugin::JoystickButton(DeviceId iDevice, int32 button, bool pressed) 
 {
+	currData[iDevice].ButtonsArray[button] = pressed;
+	if (pressed)
+		EmitKeyDownEventForKey(g_DeviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
+	else
+		EmitKeyUpEventForKey(g_DeviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
 
-	//Update delegate
 	if (joystickDelegate) {
-		joystickDelegate->PreviousFrame = joystickDelegate->LatestFrame;
-		joystickDelegate->LatestFrame = currData;		
+		joystickDelegate->JoystickButtonPressed(button, currData[iDevice]);
+	}
+}
+
+void FJoystickPlugin::JoystickAxis(DeviceId iDevice, int32 axis, float value)
+{
+	currData[iDevice].AxisArray[axis] = value;
+	EmitAnalogInputEventForKey(g_DeviceAxisKeys[iDevice][axis], value, m_InputDevices[iDevice].Player, 0);
+
+	if (joystickDelegate) {
+		joystickDelegate->AxisArrayChanged(axis, currData[iDevice].AxisArray[axis], prevData[iDevice].AxisArray[axis], currData[iDevice], prevData[iDevice]);
+	}
+}
+
+void FJoystickPlugin::JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirection value)
+{
+	currData[iDevice].HatsArray[hat] = value;
+
+	EmitAnalogInputEventForKey(g_DeviceHatKeys[iDevice][hat], value, m_InputDevices[iDevice].Player, 0); //TODO: two axis direction instead, like before?
+
+	if (joystickDelegate) {
+		joystickDelegate->HatsArrayChanged(hat, value, currData[iDevice]);
+	}
+}
+
+void FJoystickPlugin::JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy)
+{
+	//check balls
+	if (joystickDelegate) {
+		joystickDelegate->BallsArrayChanged(ball, dx, dy, currData[iDevice]);
 	}
 
-	for (int32 iDevice = 0; iDevice < m_InputDevices.Num(); iDevice++)
-	{
-		auto const & current = currData[iDevice];
-		auto const & prev = prevData[iDevice];
+	// TODO: Some kind of mouse event maybe? EmitAnalogInputEventForKey(g_DeviceBallKeys[iDevice][i], current.BallsArray[i], device.Player, 0);
+}
 
-		// check SDL buttons
-		for (uint64 i = 0; i < current.NumberOfButtons; i++) {			
-			if (g_DeviceButtonKeys[iDevice].IsValidIndex(i)) {
-				if (current.ButtonsArray[i] == 1) {
-					EmitKeyDownEventForKey(g_DeviceButtonKeys[iDevice][i], iDevice, false);
-					if (joystickDelegate) {
-						joystickDelegate->JoystickButtonPressed(i, current);
-						joystickDelegate->ButtonsArrayChanged(i, true, current);
-					}
-				}
-				else
-					if (prev.ButtonsArray[i] == 1) {
-						EmitKeyUpEventForKey(g_DeviceButtonKeys[iDevice][i], iDevice, false);
-						if (joystickDelegate) {
-							joystickDelegate->JoystickButtonReleased(i, current);
-							joystickDelegate->ButtonsArrayChanged(i, false, current);
-						}
-					}
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
+void FJoystickPlugin::JoystickTick(float DeltaTime)
+{
+	for (auto & device : m_InputDevices) {
+		if (m_InputDevices.Contains(device.Key)) {
+			if (m_InputDevices[device.Key].Connected) {
+				prevData[device.Key] = currData[device.Key];
 			}
 		}
-		
-		//check axis
-		for (uint64 i = 0; i < current.NumberOfAxis; i++) {
-			if (g_DeviceAxisKeys[iDevice].IsValidIndex(i)) {
-				if (current.AxisArray[i] != prev.AxisArray[i]) {
-					if (joystickDelegate) {
-						joystickDelegate->AxisArrayChanged(i, current.AxisArray[i], prev.AxisArray[i], current, prev);
-					}
+	}
 
-					EmitAnalogInputEventForKey(g_DeviceAxisKeys[iDevice][i], current.AxisArray[i], iDevice, 0);
-				}
-			}
-		}
+	m_DeviceSDL->update(DeltaTime);
 
-		//check hats
-		for (uint64 i = 0; i < current.NumberOfHats; i++) {
-			if (g_DeviceHatKeys[iDevice].IsValidIndex(i)) {
-				if (current.HatsArray[i] != prev.HatsArray[i]) {
-					if (joystickDelegate) {
-						joystickDelegate->HatsArrayChanged(i, current.HatsArray[i], current);
-					}
-
-					EmitAnalogInputEventForKey(g_DeviceHatKeys[iDevice][i], current.HatsArray[i], iDevice, 0);
-				}
-			}
-		}
-
-		//check balls
-		for (uint64 i = 0; i < current.NumberOfBalls; i++) {
-			if (g_DeviceBallKeys[iDevice].IsValidIndex(i)) {
-				if (current.BallsArray[i] != prev.BallsArray[i]) {
-					if (joystickDelegate) {
-						joystickDelegate->BallsArrayChanged(i, current.BallsArray[i], current);
-					}
-
-					EmitAnalogInputEventForKey(g_DeviceBallKeys[iDevice][i], current.BallsArray[i], iDevice, 0);
-				}
-			}
-		}
-
-		////check slider
-		//if (current.Slider != prev.Slider)
-		//{
-		//	if (joystickDelegate)
-		//		joystickDelegate->SliderChanged(current.Slider, current);
-		//	EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider[0], current.Slider.X, p, 0);
-		//	EmitAnalogInputEventForKey(EKeysJoystick::JoystickSlider[1], current.Slider.Y, p, 0);
-		//}
+	if (joystickDelegate) {
+		joystickDelegate->PreviousFrame = joystickDelegate->LatestFrame;
+		currData.GenerateValueArray(joystickDelegate->LatestFrame);
 	}
 }
 

@@ -39,9 +39,7 @@ DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 //
 //////////////////////////////////////////////////////////////////////
 
-#define MAX_CONTROLLED_DEVICES 16
-
-extern JoystickHotPlugInterface* g_HotPlugDelegate;
+extern JoystickEventInterface* g_HotPlugDelegate;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -65,11 +63,13 @@ typedef TSharedRef<class CG221InputDeviceSDL> CG221InputDeviceRef;
 
 struct sDeviceInfoSDL
 {
-	int deviceNumber = -1;
+	DeviceIndex deviceIndex = DeviceIndex::_invalid;
+	DeviceId deviceId = DeviceId::_invalid;
+	InstanceId instanceId = InstanceId::_invalid;
 
 	bool isConnected = false;
 
-	FString strName;
+	FString strName = "unknown";
 	
 	bool isGameController = false;
 	bool isJoystick = false;
@@ -90,19 +90,19 @@ class DeviceSDL
 public:
 	int32 getNumberOfDevices();
 	
-	int32 getNumberOfAxes(int32 InputDeviceIndex = 0);
-	int32 getNumberOfButtons(int32 InputDeviceIndex = 0);
-	int32 getNumberOfHats(int32 InputDeviceIndex = 0);
-	int32 getNumberOfBalls(int32 InputDeviceIndex = 0);
+	int32 getNumberOfAxes(DeviceId device = DeviceId::_min);
+	int32 getNumberOfButtons(DeviceId device = DeviceId::_min);
+	int32 getNumberOfHats(DeviceId device = DeviceId::_min);
+	int32 getNumberOfBalls(DeviceId device = DeviceId::_min);
 
-	bool getDeviceSDL(int32 iDevice, sDeviceInfoSDL &deviceInfo);
-	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, int32 InputDeviceIndex = 0);
+	bool getDeviceSDL(DeviceId device, sDeviceInfoSDL &deviceInfo);
+	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, DeviceId device);
 
-	FString getDeviceName(int32 InputDeviceIndex = 0);
+	FString getDeviceName(DeviceId device = DeviceId::_min);
 
-	Sint32 getDeviceInstanceId(int32 InputDeviceIndex = 0);
-	FString getDeviceGUIDtoString(int32 InputDeviceIndex = 0);
-	FGuid getDeviceGUIDtoGUID(int32 InputDeviceIndex = 0);
+	Sint32 getDeviceInstanceId(DeviceId device = DeviceId::_min);
+	FString getDeviceGUIDtoString(DeviceId device = DeviceId::_min);
+	FGuid getDeviceGUIDtoGUID(DeviceId device = DeviceId::_min);
 
 
 	//inline uint32 getTypeHash(const GUID guid)
@@ -126,12 +126,12 @@ public:
 	//}	
 	
 	void resetDevices();
-	void resetDevice(int iDevice);
+	void resetDevice(DeviceId device = DeviceId::_min);
 
-	bool initDevices();
-	bool initDevice(int deviceNumber, sDeviceInfoSDL &deviceInfo);
-	sDeviceInfoSDL * getDevice(int iDevice = 0);
-	bool doneDevice(sDeviceInfoSDL &deviceInfo);
+	//bool initDevices();
+	bool initDevice(DeviceIndex deviceNumber, sDeviceInfoSDL &deviceInfo);
+	sDeviceInfoSDL * getDevice(DeviceId iDevice = DeviceId::_min);
+	bool doneDevice(DeviceId deviceInfo);
 
 	void update(float DeltaTime);
 
@@ -147,10 +147,9 @@ private:
 	bool hasGameController;
 	bool hasHaptic;
 
-	sDeviceInfoSDL m_Devices[MAX_CONTROLLED_DEVICES];	
+	TMap<DeviceId, sDeviceInfoSDL> m_Devices;	
+	TMap<InstanceId, DeviceId> m_DeviceMapping;
 	
-	int m_NumberOfDevices;
-
 	SDL_Event m_Event_SDL;
 };
 

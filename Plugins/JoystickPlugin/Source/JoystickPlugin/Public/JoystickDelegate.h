@@ -6,10 +6,25 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-extern TArray<FKey> g_DeviceButtonKeys[MAX_JOYSTICKCOUNT];
-extern TArray<FKey> g_DeviceAxisKeys[MAX_JOYSTICKCOUNT];
-extern TArray<FKey> g_DeviceHatKeys[MAX_JOYSTICKCOUNT];
-extern TArray<FKey> g_DeviceBallKeys[MAX_JOYSTICKCOUNT];
+enum class DeviceIndex : int32 { _min = 0, _invalid = -1 };
+
+enum class InstanceId : int32 { _min = 0, _invalid = -1 };
+FORCEINLINE uint32 GetTypeHash(InstanceId instanceId)
+{
+	return GetTypeHash((int32)instanceId);
+}
+
+enum class DeviceId : int32 { _min = 0, _invalid = -1 };
+FORCEINLINE uint32 GetTypeHash(DeviceId deviceId)
+{
+	return GetTypeHash((int32)deviceId);
+}
+
+
+extern TMap<DeviceId, TArray<FKey>> g_DeviceButtonKeys;
+extern TMap<DeviceId, TArray<FKey>> g_DeviceAxisKeys;
+extern TMap<DeviceId, TArray<FKey>> g_DeviceHatKeys;
+extern TMap<DeviceId, TArray<FKey>> g_DeviceBallKeys;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -28,7 +43,7 @@ public:
 	virtual void AxisArrayChanged(int32 index, float value, float valuePrev, const FJoystickState &state, const FJoystickState &prev);
 	virtual void ButtonsArrayChanged(int32 index, bool value, const FJoystickState &state);
 	virtual void HatsArrayChanged(int32 index, float value, const FJoystickState &state);
-	virtual void BallsArrayChanged(int32 index, float value, const FJoystickState &state);
+	virtual void BallsArrayChanged(int32 index, int32 dx, int32 dy, const FJoystickState &state);
 
 	//virtual void RAxisChanged(FVector vector, const FJoystickState &state);
 	//virtual void POVChanged(JoystickPOVDirection Value, int32 index, const FJoystickState &state);
