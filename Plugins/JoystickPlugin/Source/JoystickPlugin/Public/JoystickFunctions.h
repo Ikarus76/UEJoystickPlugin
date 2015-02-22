@@ -20,16 +20,19 @@ public:
     static FJoystickInfo GetJoystick(int32 deviceId);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
-	static FJoystickState GetLatestFrame(int32 deviceId);
+	static FJoystickState GetJoystickState(int32 deviceId);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
-	static FJoystickState GetPreviousFrame(int32 deviceId);
+	static FJoystickState GetPreviousJoystickState(int32 deviceId);
 
 	UFUNCTION(BlueprintPure, Category = JoystickFunctions)
 	static int32 JoystickCount();
 
 	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
-	static bool RegisterForEvents(UObject* listener);
+	static bool RegisterForJoystickEvents(UObject* listener);
+
+	UFUNCTION(BlueprintCallable, Category = JoystickFunctions)
+	static bool MapJoystickDeviceToPlayer(int32 deviceId, int32 player);
 };
 
 //////////////////////////////////////////////////////////////////////

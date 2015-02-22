@@ -63,12 +63,6 @@ public:
 	JoystickDevice();
 	~JoystickDevice();
 
-	/*void StartupModule() override;
-	void ShutdownModule() override;
-	void JoystickTick(float DeltaTime) override;
-	void ForceFeedbackXY(int32 x, int32 y, float magnitudeScale) override;
-	bool JoystickIsAvailable() override;*/
-
 	void Tick(float DeltaTime) override;
 	void SendControllerEvents() override;
 	void SetMessageHandler(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) override;

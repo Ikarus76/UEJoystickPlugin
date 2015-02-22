@@ -25,7 +25,7 @@ FJoystickInfo UJoystickFunctions::GetJoystick(int32 deviceId)
 	return device->m_InputDevices[DeviceId(deviceId)];
 }
 
-FJoystickState UJoystickFunctions::GetLatestFrame(int32 deviceId)
+FJoystickState UJoystickFunctions::GetJoystickState(int32 deviceId)
 {
 	if (!IJoystickPlugin::IsAvailable())
 		return FJoystickState();
@@ -37,7 +37,7 @@ FJoystickState UJoystickFunctions::GetLatestFrame(int32 deviceId)
 	return device->currData[DeviceId(deviceId)];
 }
 
-FJoystickState UJoystickFunctions::GetPreviousFrame(int32 deviceId)
+FJoystickState UJoystickFunctions::GetPreviousJoystickState(int32 deviceId)
 {
 	if (!IJoystickPlugin::IsAvailable())
 		return FJoystickState();
@@ -58,11 +58,24 @@ int32 UJoystickFunctions::JoystickCount()
 	return device->m_InputDevices.Num();
 }
 
-bool UJoystickFunctions::RegisterForEvents(UObject* listener)
+bool UJoystickFunctions::RegisterForJoystickEvents(UObject* listener)
 {
 	if (!IJoystickPlugin::IsAvailable())
 		return false;
 
 	TSharedPtr<JoystickDevice> device = static_cast<FJoystickPlugin&>(IJoystickPlugin::Get()).JoystickDevice;
 	return device->AddEventListener(listener);
+}
+
+bool UJoystickFunctions::MapJoystickDeviceToPlayer(int32 deviceId, int32 player)
+{
+	if (!IJoystickPlugin::IsAvailable())
+		return false;
+
+	TSharedPtr<JoystickDevice> device = static_cast<FJoystickPlugin&>(IJoystickPlugin::Get()).JoystickDevice;
+	if (!device->m_InputDevices.Contains(DeviceId(deviceId)))
+		return false;
+
+	device->m_InputDevices[DeviceId(deviceId)].Player = player;
+	return true;
 }
