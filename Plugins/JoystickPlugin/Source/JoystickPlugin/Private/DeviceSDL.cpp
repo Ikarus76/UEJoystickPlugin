@@ -23,16 +23,11 @@ DEFINE_LOG_CATEGORY(JoystickPluginLog);
 //
 //////////////////////////////////////////////////////////////////////
 
-JoystickEventInterface* g_HotPlugDelegate;
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-DeviceSDL::DeviceSDL() :
-	hasGameController(false),
+DeviceSDL::DeviceSDL(JoystickEventInterface * eventInterface) :
 	hasJoysticks(false),
-	hasHaptic(false)
+	hasGameController(false),
+	hasHaptic(false),
+	eventInterface(eventInterface)
 {
 	UE_LOG(JoystickPluginLog, Log, TEXT("DeviceSDL Starting"));
 
@@ -85,7 +80,6 @@ void DeviceSDL::initSDL()
 	}
 
 	SDL_JoystickEventState(SDL_ENABLE);
-
 	//initDevices();
 	
 }
@@ -524,7 +518,7 @@ void DeviceSDL::update(float deltaTime)
 
 				//UE_LOG(JoystickPluginLog, Log, TEXT("SDL_JOYDEVICEADDED OR SDL_CONTROLLERDEVICEADDED"));
 				deviceIndex = static_cast<DeviceIndex>(m_Event_SDL.cdevice.which);
-				g_HotPlugDelegate->JoystickPluggedIn(deviceIndex);
+				eventInterface->JoystickPluggedIn(deviceIndex);
 				break;
 
 			case SDL_JOYDEVICEREMOVED:
@@ -533,31 +527,31 @@ void DeviceSDL::update(float deltaTime)
 				instanceId = static_cast<InstanceId>(m_Event_SDL.cdevice.which);
 				deviceId = m_DeviceMapping[instanceId];
 				m_DeviceMapping.Remove(instanceId);
-				g_HotPlugDelegate->JoystickUnplugged(deviceId);
+				eventInterface->JoystickUnplugged(deviceId);
 				break;
 
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 
 				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jbutton.which)];
-				g_HotPlugDelegate->JoystickButton(deviceId, m_Event_SDL.jbutton.button, m_Event_SDL.jbutton.state == SDL_PRESSED);
+				eventInterface->JoystickButton(deviceId, m_Event_SDL.jbutton.button, m_Event_SDL.jbutton.state == SDL_PRESSED);
 				break;
 
 			case SDL_JOYAXISMOTION:
 
 				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jaxis.which)];
-				g_HotPlugDelegate->JoystickAxis(deviceId, m_Event_SDL.jaxis.axis, m_Event_SDL.jaxis.value / (m_Event_SDL.jaxis.value < 0 ? 32768.0f : 32767.0f));
+				eventInterface->JoystickAxis(deviceId, m_Event_SDL.jaxis.axis, m_Event_SDL.jaxis.value / (m_Event_SDL.jaxis.value < 0 ? 32768.0f : 32767.0f));
 				break;
 
 			case SDL_JOYHATMOTION:
 
 				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jhat.which)];
-				g_HotPlugDelegate->JoystickHat(deviceId, m_Event_SDL.jhat.hat, SDL_hatValToDirection(m_Event_SDL.jhat.value));
+				eventInterface->JoystickHat(deviceId, m_Event_SDL.jhat.hat, SDL_hatValToDirection(m_Event_SDL.jhat.value));
 				break;
 
 			case SDL_JOYBALLMOTION:
 				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jball.which)];
-				g_HotPlugDelegate->JoystickBall(deviceId, m_Event_SDL.jball.ball, m_Event_SDL.jball.xrel, m_Event_SDL.jball.yrel);
+				eventInterface->JoystickBall(deviceId, m_Event_SDL.jball.ball, m_Event_SDL.jball.xrel, m_Event_SDL.jball.yrel);
 				break;
 		}
 	}

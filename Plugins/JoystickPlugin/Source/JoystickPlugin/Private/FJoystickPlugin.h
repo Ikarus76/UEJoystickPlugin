@@ -56,11 +56,8 @@ public:
 
 private:
 
-	DeviceSDL *m_DeviceSDL;
-
-	DataCollector *m_pCollector;
+	DeviceSDL *m_DeviceSDL = nullptr;
 	JoystickDelegate* joystickDelegate = nullptr;
-	void* DLLHandle;
 
 	TMap<DeviceId, FJoystickState> currData;
 	TMap<DeviceId, FJoystickState> prevData;
