@@ -28,7 +28,6 @@
 #include <SlateBasics.h>
 
 #include "IJoystickPlugin.h"
-#include "JoystickDelegate.h"
 #include "FJoystickPlugin.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
@@ -57,9 +56,9 @@ typedef TSharedRef<class CG221InputDeviceSDL> CG221InputDeviceRef;
 
 struct sDeviceInfoSDL
 {
-	DeviceIndex deviceIndex = DeviceIndex::_invalid;
-	DeviceId deviceId = DeviceId::_invalid;
-	InstanceId instanceId = InstanceId::_invalid;
+	DeviceIndex deviceIndex {0};
+	DeviceId deviceId {0};
+	InstanceId instanceId {0};
 
 	bool isConnected = false;
 
@@ -84,19 +83,19 @@ class DeviceSDL
 public:
 	int32 getNumberOfDevices();
 	
-	int32 getNumberOfAxes(DeviceId device = DeviceId::_min);
-	int32 getNumberOfButtons(DeviceId device = DeviceId::_min);
-	int32 getNumberOfHats(DeviceId device = DeviceId::_min);
-	int32 getNumberOfBalls(DeviceId device = DeviceId::_min);
+	int32 getNumberOfAxes(DeviceId device = DeviceId(0));
+	int32 getNumberOfButtons(DeviceId device = DeviceId(0));
+	int32 getNumberOfHats(DeviceId device = DeviceId(0));
+	int32 getNumberOfBalls(DeviceId device = DeviceId(0));
 
 	bool getDeviceSDL(DeviceId device, sDeviceInfoSDL &deviceInfo);
 	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, DeviceId device);
 
-	FString getDeviceName(DeviceId device = DeviceId::_min);
+	FString getDeviceName(DeviceId device = DeviceId(0));
 
-	Sint32 getDeviceInstanceId(DeviceId device = DeviceId::_min);
-	FString getDeviceGUIDtoString(DeviceId device = DeviceId::_min);
-	FGuid getDeviceGUIDtoGUID(DeviceId device = DeviceId::_min);
+	Sint32 getDeviceInstanceId(DeviceId device = DeviceId(0));
+	FString getDeviceGUIDtoString(DeviceId device = DeviceId(0));
+	FGuid getDeviceGUIDtoGUID(DeviceId device = DeviceId(0));
 
 
 	//inline uint32 getTypeHash(const GUID guid)
@@ -120,14 +119,14 @@ public:
 	//}	
 	
 	void resetDevices();
-	void resetDevice(DeviceId device = DeviceId::_min);
+	void resetDevice(DeviceId device = DeviceId(0));
 
 	//bool initDevices();
 	bool initDevice(DeviceIndex deviceNumber, sDeviceInfoSDL &deviceInfo);
-	sDeviceInfoSDL * getDevice(DeviceId iDevice = DeviceId::_min);
+	sDeviceInfoSDL * getDevice(DeviceId iDevice = DeviceId(0));
 	bool doneDevice(DeviceId deviceInfo);
 
-	void update(float DeltaTime);
+	void update();
 
 	DeviceSDL(JoystickEventInterface * eventInterface);
 	virtual ~DeviceSDL();

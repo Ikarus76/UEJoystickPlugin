@@ -80,8 +80,6 @@ void DeviceSDL::initSDL()
 	}
 
 	SDL_JoystickEventState(SDL_ENABLE);
-	//initDevices();
-	
 }
 
 void DeviceSDL::doneSDL()
@@ -124,27 +122,6 @@ void DeviceSDL::resetDevice(DeviceId iDevice)
 //
 //////////////////////////////////////////////////////////////////////
 
-/*bool DeviceSDL::initDevices()
-{
-	bool result = false;
-
-	int numberOfDevices = SDL_NumJoysticks();
-
-	UE_LOG(JoystickPluginLog, Log, TEXT("%i devices were found."), numberOfDevices);
-	UE_LOG(JoystickPluginLog, Log, TEXT("The names of the devices are:"));
-
-	for (int iDevice = 0; iDevice < numberOfDevices; iDevice++) {
-		sDeviceInfoSDL deviceInfo;
-		result |= initDevice(static_cast<DeviceIndex>(iDevice), deviceInfo);
-	}
-
-	return result;
-}*/
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 sDeviceInfoSDL * DeviceSDL::getDevice(DeviceId iDevice)
 {
 	sDeviceInfoSDL *result = NULL;
@@ -162,10 +139,10 @@ bool DeviceSDL::initDevice(DeviceIndex iDevice, sDeviceInfoSDL &deviceInfo)
 {
 	deviceInfo.deviceIndex = iDevice;
 
-	deviceInfo.joystick = SDL_JoystickOpen(static_cast<int>(iDevice));
+	deviceInfo.joystick = SDL_JoystickOpen(iDevice.value);
 	if (deviceInfo.joystick == nullptr)
 		return false;
-	deviceInfo.instanceId = static_cast<InstanceId>(SDL_JoystickInstanceID(deviceInfo.joystick));
+	deviceInfo.instanceId = InstanceId(SDL_JoystickInstanceID(deviceInfo.joystick));
 
 	// DEBUG
 	deviceInfo.strName = FString(ANSI_TO_TCHAR(SDL_JoystickName(deviceInfo.joystick)));
@@ -179,8 +156,8 @@ bool DeviceSDL::initDevice(DeviceIndex iDevice, sDeviceInfoSDL &deviceInfo)
 	deviceInfo.isJoystick = true;
 	deviceInfo.isConnected = true;
 
-	if (SDL_IsGameController(static_cast<int>(iDevice))) {
-		deviceInfo.gameController = SDL_GameControllerOpen(static_cast<int>(iDevice));
+	if (SDL_IsGameController(iDevice.value)) {
+		deviceInfo.gameController = SDL_GameControllerOpen(iDevice.value);
 
 		deviceInfo.strName = FString(ANSI_TO_TCHAR(SDL_GameControllerName(deviceInfo.gameController)));
 		UE_LOG(JoystickPluginLog, Log, TEXT("--- %s"), *deviceInfo.strName);
@@ -189,7 +166,7 @@ bool DeviceSDL::initDevice(DeviceIndex iDevice, sDeviceInfoSDL &deviceInfo)
 	}
 
 	
-	deviceInfo.haptic = SDL_HapticOpen(static_cast<int>(iDevice));
+	deviceInfo.haptic = SDL_HapticOpen(iDevice.value);
 	if (deviceInfo.haptic != nullptr) {
 		UE_LOG(JoystickPluginLog, Log, TEXT("--- Rumble device detected"));
 		
@@ -218,7 +195,7 @@ bool DeviceSDL::initDevice(DeviceIndex iDevice, sDeviceInfoSDL &deviceInfo)
 		}
 	}
 
-	deviceInfo.deviceId = static_cast<DeviceId>(m_Devices.Num());
+	deviceInfo.deviceId = DeviceId(m_Devices.Num());
 	m_Devices.Add(deviceInfo.deviceId, deviceInfo);
 	m_DeviceMapping.Add(deviceInfo.instanceId, deviceInfo.deviceId);
 
@@ -303,7 +280,7 @@ FString DeviceSDL::getDeviceGUIDtoString(DeviceId InputDeviceIndex)
 	FString result = "";
 
 	if (m_Devices.Contains(InputDeviceIndex)) {
-		SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(static_cast<int>(m_Devices[InputDeviceIndex].deviceIndex));
+		SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(m_Devices[InputDeviceIndex].deviceIndex.value);
 		SDL_JoystickGetGUIDString(guid, buffer, sizeBuffer);
 		result = ANSI_TO_TCHAR(buffer);
 	}
@@ -315,7 +292,7 @@ FGuid DeviceSDL::getDeviceGUIDtoGUID(DeviceId InputDeviceIndex)
 	FGuid result;
 
 	if (m_Devices.Contains(InputDeviceIndex)) {
-		SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(static_cast<int>(m_Devices[InputDeviceIndex].deviceIndex));
+		SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(m_Devices[InputDeviceIndex].deviceIndex.value);
 		memcpy(&result, &guid, sizeof(FGuid));
 	}
 	return result;
@@ -503,56 +480,54 @@ bool DeviceSDL::getDeviceSDL(DeviceId iDevice, sDeviceInfoSDL &deviceInfo)
 //
 //////////////////////////////////////////////////////////////////////
 
-void DeviceSDL::update(float deltaTime)
+void DeviceSDL::update()
 {
-	DeviceId deviceId;
-	DeviceIndex deviceIndex;
-	InstanceId instanceId;
-
 	// This will spam the log heavily, comment it out for real plugins :)
 	//UE_LOG(JoystickPluginLog, Log, TEXT("DeviceSDL::update %f"), deltaTime);
 
 	while (SDL_PollEvent(&m_Event_SDL)) {
 		switch (m_Event_SDL.type) {
 			case SDL_JOYDEVICEADDED:
-
+			{
 				//UE_LOG(JoystickPluginLog, Log, TEXT("SDL_JOYDEVICEADDED OR SDL_CONTROLLERDEVICEADDED"));
-				deviceIndex = static_cast<DeviceIndex>(m_Event_SDL.cdevice.which);
+				DeviceIndex deviceIndex = DeviceIndex(m_Event_SDL.cdevice.which);
 				eventInterface->JoystickPluggedIn(deviceIndex);
 				break;
-
+			}
 			case SDL_JOYDEVICEREMOVED:
-
+			{
 				//UE_LOG(JoystickPluginLog, Log, TEXT("SDL_JOYDEVICEREMOVED OR SDL_CONTROLLERDEVICEREMOVED"));
-				instanceId = static_cast<InstanceId>(m_Event_SDL.cdevice.which);
-				deviceId = m_DeviceMapping[instanceId];
+				InstanceId instanceId = InstanceId(m_Event_SDL.cdevice.which);
+				DeviceId deviceId = m_DeviceMapping[instanceId];
 				m_DeviceMapping.Remove(instanceId);
 				eventInterface->JoystickUnplugged(deviceId);
 				break;
-
+			}
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
-
-				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jbutton.which)];
+			{
+				DeviceId deviceId = m_DeviceMapping[InstanceId(m_Event_SDL.jbutton.which)];
 				eventInterface->JoystickButton(deviceId, m_Event_SDL.jbutton.button, m_Event_SDL.jbutton.state == SDL_PRESSED);
 				break;
-
+			}
 			case SDL_JOYAXISMOTION:
-
-				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jaxis.which)];
+			{
+				DeviceId deviceId = m_DeviceMapping[InstanceId(m_Event_SDL.jaxis.which)];
 				eventInterface->JoystickAxis(deviceId, m_Event_SDL.jaxis.axis, m_Event_SDL.jaxis.value / (m_Event_SDL.jaxis.value < 0 ? 32768.0f : 32767.0f));
 				break;
-
+			}
 			case SDL_JOYHATMOTION:
-
-				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jhat.which)];
+			{
+				DeviceId deviceId = m_DeviceMapping[InstanceId(m_Event_SDL.jhat.which)];
 				eventInterface->JoystickHat(deviceId, m_Event_SDL.jhat.hat, SDL_hatValToDirection(m_Event_SDL.jhat.value));
 				break;
-
+			}
 			case SDL_JOYBALLMOTION:
-				deviceId = m_DeviceMapping[static_cast<InstanceId>(m_Event_SDL.jball.which)];
+			{
+				DeviceId deviceId = m_DeviceMapping[InstanceId(m_Event_SDL.jball.which)];
 				eventInterface->JoystickBall(deviceId, m_Event_SDL.jball.ball, m_Event_SDL.jball.xrel, m_Event_SDL.jball.yrel);
 				break;
+			}
 		}
 	}
 }

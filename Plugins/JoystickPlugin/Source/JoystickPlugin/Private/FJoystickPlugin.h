@@ -1,12 +1,42 @@
 #pragma once
 
+#include <Runtime/InputDevice/Public/InputDevice.h>
+#include <JoystickInterface.h>
+
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////
 
-class DataCollector;
-class JoystickDelegate;
 class DeviceSDL;
+
+struct DeviceIndex
+{
+	int32 value = -1;
+	explicit DeviceIndex(int32 v) : value(v) {}
+	bool operator==(const DeviceIndex other) const { return value == other.value; };
+};
+
+struct InstanceId
+{
+	int32 value = -1;
+	explicit InstanceId(int32 v) : value(v) {}
+	bool operator==(InstanceId other) const { return value == other.value; };
+};
+FORCEINLINE uint32 GetTypeHash(InstanceId instanceId)
+{
+	return GetTypeHash(instanceId.value);
+}
+
+struct DeviceId
+{
+	int32 value = -1;
+	explicit DeviceId(int32 v) : value(v) {}
+	bool operator==(DeviceId other) const { return value == other.value; };
+};
+FORCEINLINE uint32 GetTypeHash(DeviceId deviceId)
+{
+	return GetTypeHash(deviceId.value);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -27,23 +57,27 @@ public:
 	virtual void JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy) = 0;
 };
 
-class FJoystickPlugin : public IJoystickPlugin, public JoystickEventInterface
+class JoystickDevice : public IInputDevice, public JoystickEventInterface
 {
 public:
-	/** IModuleInterface implementation */
-	void StartupModule() override;
+	JoystickDevice();
+	~JoystickDevice();
+
+	/*void StartupModule() override;
 	void ShutdownModule() override;
-
-	/** To subscribe to event calls, only supports one listener for now */
-	void SetDelegate(JoystickDelegate* newDelegate) override;
-
-	/** Call this in your class Tick to update information */
 	void JoystickTick(float DeltaTime) override;
-
 	void ForceFeedbackXY(int32 x, int32 y, float magnitudeScale) override;
+	bool JoystickIsAvailable() override;*/
 
-	bool JoystickIsAvailable() override;
+	void Tick(float DeltaTime) override;
+	void SendControllerEvents() override;
+	void SetMessageHandler(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) override;
+	bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override;
+	void SetChannelValue(int32 ControllerId, FForceFeedbackChannelType ChannelType, float Value) override;
+	void SetChannelValues(int32 ControllerId, const FForceFeedbackValues& values) override;
 	
+	bool AddEventListener(UObject* listener);
+
 	void JoystickPluggedIn(DeviceIndex iDevice) override;
 	void JoystickUnplugged(DeviceId iDevice) override;
 	void JoystickButton(DeviceId iDevice, int32 button, bool pressed) override;
@@ -51,23 +85,43 @@ public:
 	void JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirection value) override;
 	void JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy) override;
 
-	bool AddInputDevice(DeviceId iDevice);
-	bool RemoveInputDevice(DeviceId iDevice);
-
-private:
-
-	DeviceSDL *m_DeviceSDL = nullptr;
-	JoystickDelegate* joystickDelegate = nullptr;
-
 	TMap<DeviceId, FJoystickState> currData;
 	TMap<DeviceId, FJoystickState> prevData;
 
 	TMap<DeviceId, FJoystickInfo> m_InputDevices;
+private:
+	bool AddInputDevice(DeviceId iDevice);
+
+	DeviceSDL *m_DeviceSDL = nullptr;
+	TArray<TWeakObjectPtr<UObject>> eventListeners;
 
 	TMap<DeviceId, TArray<FKey>> deviceButtonKeys;
 	TMap<DeviceId, TArray<FKey>> deviceAxisKeys;
 	TMap<DeviceId, TArray<FKey>> deviceHatKeys[2];
 	//TMap<DeviceId, TArray<FKey>> deviceBallKeys[2];
+};
+
+class FJoystickPlugin : public IJoystickPlugin
+{
+public:
+	virtual TSharedPtr< class IInputDevice > CreateInputDevice(const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler) override
+	{
+		return JoystickDevice;
+	}
+
+	void ShutdownModule() override
+	{
+		IJoystickPlugin::ShutdownModule();
+		JoystickDevice = nullptr;
+	}
+
+	void StartupModule() override
+	{
+		IJoystickPlugin::StartupModule();
+		JoystickDevice = MakeShareable(new ::JoystickDevice());
+	}
+
+	TSharedPtr< class JoystickDevice > JoystickDevice;
 };
 
 //////////////////////////////////////////////////////////////////////
