@@ -75,105 +75,87 @@ bool FJoystickPlugin::AddInputDevice(DeviceId iDevice)
 		deviceInfo.DeviceId = static_cast<int>(iDevice);
 		deviceInfo.Player = 0;
 
-		deviceInfo.InstanceId = m_DeviceSDL->getDeviceGUIDtoGUID(iDevice);
 		deviceInfo.ProductId = m_DeviceSDL->getDeviceGUIDtoGUID(iDevice);
-		deviceInfo.ProductName = FName(*m_DeviceSDL->getDeviceName(iDevice));
-		deviceInfo.InstanceName = FName(*m_DeviceSDL->getDeviceName(iDevice));
-
-		FString strDeviceName = deviceInfo.InstanceName.ToString().Replace(TEXT(" "), TEXT(""));
-		deviceInfo.DeviceName = strDeviceName;
+		deviceInfo.ProductName = *m_DeviceSDL->getDeviceName(iDevice);
+		deviceInfo.DeviceName = deviceInfo.ProductName.Replace(TEXT(" "), TEXT(""));
 
 		deviceInfo.IsGameController = deviceInfoSDL.isGameController;		
 
-		UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *strDeviceName, static_cast<int>(iDevice));
+		UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *deviceInfo.DeviceName, static_cast<int>(iDevice));
 		m_InputDevices.Add(iDevice, deviceInfo);
 
 		FJoystickState newDeviceState(static_cast<int>(iDevice));
 		if (m_DeviceSDL->getDeviceState(newDeviceState, m_InputDevices[iDevice], iDevice)) {
 
 			// create FKeyDetails for axis
-			g_DeviceAxisKeys.Add(iDevice);
-			for (int iAxis = 0; iAxis < newDeviceState.NumberOfAxis; iAxis++) {
-				//FText textValue = FText::Format(LOCTEXT("DeviceAxis", "Device {0} Axis {1}"), FText::AsNumber(iDevice), FText::AsNumber(iAxis));
+			deviceAxisKeys.Add(iDevice);
+			for (int iAxis = 0; iAxis < newDeviceState.NumberOfAxis; iAxis++)
+			{
+				FString strName = FString::Printf(TEXT("Joystick_%s_Axis%d"), *deviceInfo.DeviceName, iAxis);
+				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, static_cast<int>(iDevice));
+				deviceAxisKeys[iDevice].Add(FKey(FName(*strName)));
 
-				FString strName("Axis");
-				strName.Append(FString::FromInt(iAxis));
-				strName.Append("_");
-				strName.Append(strDeviceName);
-
-				FText textValue = FText::FromString(strName);
-
-				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *textValue.ToString(), static_cast<int>(iDevice));
-
-				g_DeviceAxisKeys[iDevice].Add(FKey(FName(*strName)));
-				if (!EKeys::GetKeyDetails(g_DeviceAxisKeys[iDevice][iAxis]).IsValid())
+				if (!EKeys::GetKeyDetails(deviceAxisKeys[iDevice][iAxis]).IsValid())
 				{
-					EKeys::AddKey(FKeyDetails(g_DeviceAxisKeys[iDevice][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+					FText textValue = FText::Format(LOCTEXT("DeviceAxis", "{0} Axis {1}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iAxis));
+					EKeys::AddKey(FKeyDetails(deviceAxisKeys[iDevice][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
 				}
 			}
 
 			// create FKeyDetails for buttons
-			g_DeviceButtonKeys.Add(iDevice);
-			for (int iButton = 0; iButton < newDeviceState.NumberOfButtons; iButton++) {
-				//FText textValue = FText::Format(LOCTEXT("DeviceButton", "Device {0} Button {1}"), FText::AsNumber(iDevice), FText::AsNumber(iButton));
+			deviceButtonKeys.Add(iDevice);
+			for (int iButton = 0; iButton < newDeviceState.NumberOfButtons; iButton++)
+			{
+				FString strName = FString::Printf(TEXT("Joystick_%s_Button%d"), *deviceInfo.DeviceName, iButton);
+				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, static_cast<int>(iDevice));
+				deviceButtonKeys[iDevice].Add(FKey(FName(*strName)));
 
-				FString strName("Button");
-				strName.Append(FString::FromInt(iButton));
-				strName.Append("_");
-				strName.Append(strDeviceName);
-
-				FText textValue = FText::FromString(strName);
-
-				UE_LOG(JoystickPluginLog, Log, TEXT("add %s"), *textValue.ToString());
-
-				g_DeviceButtonKeys[iDevice].Add(FKey(FName(*strName)));
-
-				if (!EKeys::GetKeyDetails(g_DeviceButtonKeys[iDevice][iButton]).IsValid())
+				if (!EKeys::GetKeyDetails(deviceButtonKeys[iDevice][iButton]).IsValid())
 				{
-					EKeys::AddKey(FKeyDetails(g_DeviceButtonKeys[iDevice][iButton], textValue, FKeyDetails::GamepadKey));
+					FText textValue = FText::Format(LOCTEXT("DeviceButton", "{0} Button {1}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iButton));
+					EKeys::AddKey(FKeyDetails(deviceButtonKeys[iDevice][iButton], textValue, FKeyDetails::GamepadKey));
 				}
 			}
+
+			FString _2DaxisNames[] = { TEXT("X"), TEXT("Y") };
 
 			// create FKeyDetails for hats
-			g_DeviceHatKeys.Add(iDevice);
-			for (int iHat = 0; iHat < newDeviceState.NumberOfHats; iHat++) {
-				//FText textValue = FText::Format(LOCTEXT("DeviceHat", "Device {0} Hat {1}"), FText::AsNumber(iDevice), FText::AsNumber(iHat));
-
-				FString strName("Hat");
-				strName.Append(FString::FromInt(iHat));
-				strName.Append("_");
-				strName.Append(strDeviceName);
-
-				FText textValue = FText::FromString(strName);
-
-				UE_LOG(JoystickPluginLog, Log, TEXT("add %s"), *textValue.ToString());
-
-				g_DeviceHatKeys[iDevice].Add(FKey(FName(*strName)));
-
-				if (!EKeys::GetKeyDetails(g_DeviceHatKeys[iDevice][iHat]).IsValid())
+			for (int iAxis = 0; iAxis < 2; iAxis++)
+			{
+				deviceHatKeys[iAxis].Add(iDevice);
+				for (int iHat = 0; iHat < newDeviceState.NumberOfHats; iHat++)
 				{
-					EKeys::AddKey(FKeyDetails(g_DeviceHatKeys[iDevice][iHat], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+					FString strName = FString::Printf(TEXT("Joystick_%s_Hat%d_%s"), *deviceInfo.DeviceName, iHat, *_2DaxisNames[iAxis]);
+					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, static_cast<int>(iDevice));
+					FKey key { *strName };
+					deviceHatKeys[iAxis][iDevice].Add(key);
+
+					if (!EKeys::GetKeyDetails(key).IsValid())
+					{
+						FText textValue = FText::Format(LOCTEXT("DeviceHat", "{0} Hat {1} {2}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iHat), FText::FromString(_2DaxisNames[iAxis]));
+						EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+					}
 				}
 			}
 
-			// create FKeyDetails for balls
-			//g_DeviceBallKeys.Add(iDevice);
-			//for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++) {
-			//	//FText textValue = FText::Format(LOCTEXT("DeviceBall", "Device {0} Ball {1}"), FText::AsNumber(iDevice), FText::AsNumber(iBall));
+			/*// create FKeyDetails for balls
+			for (int iAxis = 0; iAxis < 2; iAxis++)
+			{
+				deviceBallKeys[iAxis].Add(iDevice);
+				for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++)
+				{
+					FString strName = FString::Printf(TEXT("Joystick_%s_Ball%d_%s"), *strDeviceName, iBall, _2DaxisNames[iAxis]);
+					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, static_cast<int>(iDevice));
+					FKey key{ *strName };
+					deviceBallKeys[iAxis][iDevice].Add(key);
 
-			//	FString strName("Ball");
-			//	strName.Append(FString::FromInt(iBall));
-			//	strName.Append("_");
-			//	strName.Append(strDeviceName);
-
-			//	FText textValue = FText::FromString(strName);
-
-			//	UE_LOG(JoystickPluginLog, Log, TEXT("add Ball/Slider: %s"), *textValue.ToString());
-
-			//	g_DeviceBallKeys[iDevice].Add(FKey(FName(*strName)));
-
-			//	EKeys::AddKey(FKeyDetails(g_DeviceBallKeys[iDevice][iBall], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-			//}
+					if (!EKeys::GetKeyDetails(key).IsValid())
+					{
+						FText textValue = FText::Format(LOCTEXT("DeviceBall", "{0} Ball {1} {2}"), FText::FromString(strDeviceName), FText::AsNumber(iBall), FText::FromString(_2DaxisNames[iAxis]));
+						EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+					}
+				}
+			}*/
 
 			prevData.Add(iDevice, newDeviceState);
 			currData.Add(iDevice, newDeviceState);
@@ -350,13 +332,23 @@ bool EmitAnalogInputEventForKey(FKey key, float value, int32 user, bool repeat)
 //
 //////////////////////////////////////////////////////////////////////
 
+bool EmitPointerEventForKey(int32 pointerIndex, const FVector2D &value)
+{
+	FPointerEvent pointerEvent(pointerIndex, FVector2D::ZeroVector, FVector2D::ZeroVector, value, TSet<FKey>(), FSlateApplication::Get().GetModifierKeys());
+	return FSlateApplication::Get().ProcessMouseMoveEvent(pointerEvent);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////
+
 void FJoystickPlugin::JoystickButton(DeviceId iDevice, int32 button, bool pressed) 
 {
 	currData[iDevice].ButtonsArray[button] = pressed;
 	if (pressed)
-		EmitKeyDownEventForKey(g_DeviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
+		EmitKeyDownEventForKey(deviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
 	else
-		EmitKeyUpEventForKey(g_DeviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
+		EmitKeyUpEventForKey(deviceButtonKeys[iDevice][button], m_InputDevices[iDevice].Player, false);
 
 	if (joystickDelegate) {
 		joystickDelegate->JoystickButtonPressed(button, currData[iDevice]);
@@ -366,7 +358,7 @@ void FJoystickPlugin::JoystickButton(DeviceId iDevice, int32 button, bool presse
 void FJoystickPlugin::JoystickAxis(DeviceId iDevice, int32 axis, float value)
 {
 	currData[iDevice].AxisArray[axis] = value;
-	EmitAnalogInputEventForKey(g_DeviceAxisKeys[iDevice][axis], value, m_InputDevices[iDevice].Player, 0);
+	EmitAnalogInputEventForKey(deviceAxisKeys[iDevice][axis], value, m_InputDevices[iDevice].Player, 0);
 
 	if (joystickDelegate) {
 		joystickDelegate->AxisArrayChanged(axis, currData[iDevice].AxisArray[axis], prevData[iDevice].AxisArray[axis], currData[iDevice], prevData[iDevice]);
@@ -377,7 +369,9 @@ void FJoystickPlugin::JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirect
 {
 	currData[iDevice].HatsArray[hat] = value;
 
-	EmitAnalogInputEventForKey(g_DeviceHatKeys[iDevice][hat], value, m_InputDevices[iDevice].Player, 0); //TODO: two axis direction instead, like before?
+	FVector2D povAxis = POVAxis(value);
+	EmitAnalogInputEventForKey(deviceHatKeys[0][iDevice][hat], povAxis.X, m_InputDevices[iDevice].Player, 0);
+	EmitAnalogInputEventForKey(deviceHatKeys[1][iDevice][hat], povAxis.Y, m_InputDevices[iDevice].Player, 0);
 
 	if (joystickDelegate) {
 		joystickDelegate->HatsArrayChanged(hat, value, currData[iDevice]);
@@ -386,12 +380,11 @@ void FJoystickPlugin::JoystickHat(DeviceId iDevice, int32 hat, JoystickPOVDirect
 
 void FJoystickPlugin::JoystickBall(DeviceId iDevice, int32 ball, int dx, int dy)
 {
-	//check balls
+	// EmitPointerEventForKey(ball, FVector2D(dx, dy)); TODO: Test how this works with an actual "ball"
+
 	if (joystickDelegate) {
 		joystickDelegate->BallsArrayChanged(ball, dx, dy, currData[iDevice]);
 	}
-
-	// TODO: Some kind of mouse event maybe? EmitAnalogInputEventForKey(g_DeviceBallKeys[iDevice][i], current.BallsArray[i], device.Player, 0);
 }
 
 //////////////////////////////////////////////////////////////////////

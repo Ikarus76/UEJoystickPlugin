@@ -63,6 +63,11 @@ private:
 	TMap<DeviceId, FJoystickState> prevData;
 
 	TMap<DeviceId, FJoystickInfo> m_InputDevices;
+
+	TMap<DeviceId, TArray<FKey>> deviceButtonKeys;
+	TMap<DeviceId, TArray<FKey>> deviceAxisKeys;
+	TMap<DeviceId, TArray<FKey>> deviceHatKeys[2];
+	//TMap<DeviceId, TArray<FKey>> deviceBallKeys[2];
 };
 
 //////////////////////////////////////////////////////////////////////
