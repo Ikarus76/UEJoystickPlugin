@@ -1,11 +1,16 @@
 #pragma once
 
-#include <Runtime/InputDevice/Public/InputDevice.h>
+#include <Engine.h>
+#include <UObjectBase.h>
+#include <InputDevice.h>
 #include <JoystickInterface.h>
+#include <InputSettingsCustomization.h>
+
 
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////
+
 
 class DeviceSDL;
 
@@ -95,8 +100,11 @@ private:
 	//TMap<DeviceId, TArray<FKey>> deviceBallKeys[2];
 };
 
+
 class FJoystickPlugin : public IJoystickPlugin
 {
+
+
 public:
 	virtual TSharedPtr< class IInputDevice > CreateInputDevice(const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler) override
 	{
@@ -113,6 +121,10 @@ public:
 	{
 		IJoystickPlugin::StartupModule();
 		JoystickDevice = MakeShareable(new ::JoystickDevice());
+
+		// Replace parts of the input settings widget to make them wide enough to fit long joystick names
+		FInputActionMappingCustomizationExtended::Register();
+		FInputAxisMappingCustomizationExtended::Register();
 	}
 
 	TSharedPtr< class JoystickDevice > JoystickDevice;
