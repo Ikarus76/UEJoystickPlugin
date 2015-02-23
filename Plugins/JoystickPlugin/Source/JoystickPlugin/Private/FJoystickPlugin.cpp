@@ -53,12 +53,13 @@ JoystickDevice::~JoystickDevice()
 
 bool JoystickDevice::AddInputDevice(DeviceId iDevice)
 {
-	bool result = false;
+	bool result = true; // be optimistic
 
 	sDeviceInfoSDL deviceInfoSDL;
 
 	if (m_InputDevices.Contains(iDevice)) {
 		UE_LOG(JoystickPluginLog, Log, TEXT("already an registered device %s %i"), *m_InputDevices[iDevice].DeviceName, iDevice.value);
+		result = false;
 	} else
 	if (m_DeviceSDL->getDeviceSDL(iDevice, deviceInfoSDL)) {
 		FJoystickInfo deviceInfo;
@@ -154,7 +155,6 @@ bool JoystickDevice::AddInputDevice(DeviceId iDevice)
 		}
 	}
 	
-
 	return result;
 }
 
@@ -180,7 +180,8 @@ void JoystickDevice::JoystickPluggedIn(DeviceIndex deviceIndex)
 	{
 		if (deviceInfoSDL.isConnected) 
 		{
-			if (AddInputDevice(deviceInfoSDL.deviceId))
+			bool result = AddInputDevice(deviceInfoSDL.deviceId);
+			if (result)
 			{
 				UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), deviceInfoSDL.deviceId.value);
 				for (auto & listener : eventListeners)
