@@ -21,11 +21,6 @@ FORCEINLINE uint32 GetTypeHash(DeviceId deviceId)
 }
 
 
-extern TMap<DeviceId, TArray<FKey>> g_DeviceButtonKeys;
-extern TMap<DeviceId, TArray<FKey>> g_DeviceAxisKeys;
-extern TMap<DeviceId, TArray<FKey>> g_DeviceHatKeys;
-extern TMap<DeviceId, TArray<FKey>> g_DeviceBallKeys;
-
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////

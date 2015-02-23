@@ -89,13 +89,9 @@ struct FJoystickInfo
 	bool IsRumbleDevice = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
-	FGuid InstanceId;
-	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
 	FGuid ProductId;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
-	FName ProductName;
-	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
-	FName InstanceName;
+	FString ProductName;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
 	FString DeviceName;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)

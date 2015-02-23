@@ -39,12 +39,6 @@ DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 //
 //////////////////////////////////////////////////////////////////////
 
-extern JoystickEventInterface* g_HotPlugDelegate;
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
  * Type definition for shared pointers to instances of
  */
@@ -135,7 +129,7 @@ public:
 
 	void update(float DeltaTime);
 
-	DeviceSDL();
+	DeviceSDL(JoystickEventInterface * eventInterface);
 	virtual ~DeviceSDL();
 
 protected:
@@ -151,6 +145,8 @@ private:
 	TMap<InstanceId, DeviceId> m_DeviceMapping;
 	
 	SDL_Event m_Event_SDL;
+
+	JoystickEventInterface* eventInterface;
 };
 
 //////////////////////////////////////////////////////////////////////

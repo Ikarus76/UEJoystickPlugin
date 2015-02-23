@@ -56,16 +56,18 @@ public:
 
 private:
 
-	DeviceSDL *m_DeviceSDL;
-
-	DataCollector *m_pCollector;
+	DeviceSDL *m_DeviceSDL = nullptr;
 	JoystickDelegate* joystickDelegate = nullptr;
-	void* DLLHandle;
 
 	TMap<DeviceId, FJoystickState> currData;
 	TMap<DeviceId, FJoystickState> prevData;
 
 	TMap<DeviceId, FJoystickInfo> m_InputDevices;
+
+	TMap<DeviceId, TArray<FKey>> deviceButtonKeys;
+	TMap<DeviceId, TArray<FKey>> deviceAxisKeys;
+	TMap<DeviceId, TArray<FKey>> deviceHatKeys[2];
+	//TMap<DeviceId, TArray<FKey>> deviceBallKeys[2];
 };
 
 //////////////////////////////////////////////////////////////////////
