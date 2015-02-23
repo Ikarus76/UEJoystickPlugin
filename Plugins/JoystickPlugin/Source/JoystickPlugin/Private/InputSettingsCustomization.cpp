@@ -1,4 +1,5 @@
 #include "JoystickPluginPrivatePCH.h"
+#if WITH_EDITOR
 
 #include "InputSettingsCustomization.h"
 
@@ -234,3 +235,5 @@ void FInputAxisMappingCustomizationExtended::RemoveAxisMappingButton_OnClick()
 		ParentArrayHandle->DeleteItem(AxisMappingHandle->GetIndexInArray());
 	}
 }
+
+#endif

@@ -4,7 +4,6 @@
 #include <UObjectBase.h>
 #include <InputDevice.h>
 #include <JoystickInterface.h>
-#include <InputSettingsCustomization.h>
 
 
 //////////////////////////////////////////////////////////////////////
@@ -117,15 +116,7 @@ public:
 		JoystickDevice = nullptr;
 	}
 
-	void StartupModule() override
-	{
-		IJoystickPlugin::StartupModule();
-		JoystickDevice = MakeShareable(new ::JoystickDevice());
-
-		// Replace parts of the input settings widget to make them wide enough to fit long joystick names
-		FInputActionMappingCustomizationExtended::Register();
-		FInputAxisMappingCustomizationExtended::Register();
-	}
+	void StartupModule() override;
 
 	TSharedPtr< class JoystickDevice > JoystickDevice;
 };

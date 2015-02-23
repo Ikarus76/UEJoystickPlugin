@@ -59,27 +59,30 @@ namespace UnrealBuildTool.Rules
 					// ... add other public dependencies that you statically link with here ...
 				});
 
-			PublicIncludePathModuleNames.AddRange(
-				new string[]
-				{
-				});
-
 			PrivateIncludePathModuleNames.AddRange(
 				new string[]
 				{
-					"PropertyEditor",
-					"ActorPickerMode",
-					"DetailCustomizations",
 					"InputDevice",
 				});
 
-			PrivateDependencyModuleNames.AddRange(
-				new string[]
-				{
-					"PropertyEditor",
-					"DetailCustomizations",
-					// ... add private dependencies that you statically link with here ...
-				});
+			if (Target.Type == TargetRules.TargetType.Editor)
+			{
+				PrivateIncludePathModuleNames.AddRange(
+					new string[]
+					{
+						"PropertyEditor",
+						"ActorPickerMode",
+						"DetailCustomizations",
+					});
+
+				PrivateDependencyModuleNames.AddRange(
+					new string[]
+					{
+						"PropertyEditor",
+						"DetailCustomizations",
+						// ... add private dependencies that you statically link with here ...
+					});
+			}
 
 			DynamicallyLoadedModuleNames.AddRange(
 				new string[]
