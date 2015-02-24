@@ -1,11 +1,15 @@
 #pragma once
 
-#include <Runtime/InputDevice/Public/InputDevice.h>
+#include <Engine.h>
+#include <UObjectBase.h>
+#include <InputDevice.h>
 #include <JoystickInterface.h>
+
 
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////
+
 
 class DeviceSDL;
 
@@ -95,8 +99,11 @@ private:
 	//TMap<DeviceId, TArray<FKey>> deviceBallKeys[2];
 };
 
+
 class FJoystickPlugin : public IJoystickPlugin
 {
+
+
 public:
 	virtual TSharedPtr< class IInputDevice > CreateInputDevice(const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler) override
 	{
@@ -109,11 +116,7 @@ public:
 		JoystickDevice = nullptr;
 	}
 
-	void StartupModule() override
-	{
-		IJoystickPlugin::StartupModule();
-		JoystickDevice = MakeShareable(new ::JoystickDevice());
-	}
+	void StartupModule() override;
 
 	TSharedPtr< class JoystickDevice > JoystickDevice;
 };

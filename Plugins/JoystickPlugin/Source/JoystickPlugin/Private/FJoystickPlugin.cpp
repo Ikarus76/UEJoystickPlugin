@@ -8,9 +8,25 @@
 
 #include "DeviceSDL.h"
 
+#if WITH_EDITOR
+	#include <InputSettingsCustomization.h>
+#endif
+
 IMPLEMENT_MODULE(FJoystickPlugin, JoystickPlugin)
 
 #define LOCTEXT_NAMESPACE "JoystickPlugin"
+
+void FJoystickPlugin::StartupModule()
+{
+	IJoystickPlugin::StartupModule();
+	JoystickDevice = MakeShareable(new ::JoystickDevice());
+
+#if WITH_EDITOR
+	// Replace parts of the input settings widget to make them wide enough to fit long joystick names
+	FInputActionMappingCustomizationExtended::Register();
+	FInputAxisMappingCustomizationExtended::Register();
+#endif
+}
 
 //////////////////////////////////////////////////////////////////////
 //
