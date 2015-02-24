@@ -90,6 +90,14 @@ namespace UnrealBuildTool.Rules
 					// ... add any modules that your module loads dynamically here ...
 				});
 
+			//LoadHydraLib(Target);
+
+			//PublicIncludePaths.Add(UEBuildConfiguration.UEThirdPartySourceDirectory + "SDL");
+			//PublicAdditionalLibraries.Add(UEBuildConfiguration.UEThirdPartySourceDirectory + "SDL/lib/x64/SDL.lib");
+
+			//PublicIncludePaths.Add(UEBuildConfiguration.UEThirdPartySourceDirectory + "SDL2/SDL2/include");
+			//PublicAdditionalLibraries.Add(UEBuildConfiguration.UEThirdPartySourceDirectory + "SDL2/SDL2/x64/SDL2.lib");
+			//PublicAdditionalLibraries.Add(UEBuildConfiguration.UEThirdPartySourceDirectory + "SDL2/SDL2/lib/SDL2.lib");
 
 			PublicIncludePaths.Add(IncludePathSDL2);
 			PublicAdditionalLibraries.Add(Path.Combine(LibraryPathSDL2, "SDL2.lib"));
@@ -97,7 +105,33 @@ namespace UnrealBuildTool.Rules
 			PublicDelayLoadDLLs.Add("SDL2.dll");
 		}
 
-		
+		/*
+		public bool LoadHydraLib(TargetInfo Target)
+		{
+			bool isLibrarySupported = false;
+
+			if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+			{
+				isLibrarySupported = true;
+
+				string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "x64" : "x32";
+				string LibrariesPath = Path.Combine(ThirdPartyPath, "Sixense", "Lib");
+
+				//Lib based bind unsupported due to sixense wrong lib version compile, limiting platforms to windows 32/64
+				//PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "sixense_s_" + PlatformString + ".lib"));
+			}
+
+			if (isLibrarySupported)
+			{
+				// Include path
+				PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "Sixense", "Include"));
+			}
+
+			//Definitions.Add(string.Format("WITH_HYDRA_BINDING={0}", isLibrarySupported ? 1 : 0));
+
+			return isLibrarySupported;
+		}*/
+
 
 	}
 

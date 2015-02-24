@@ -16,6 +16,15 @@ namespace InputConstants
 	const float ScaleBoxWidth = 50.0f;
 }
 
+// For 4.6 compatibility
+struct TextOrStringConverter
+{
+	FText text;
+	TextOrStringConverter(const FText& text) : text(text) {}
+	operator FText() { return text; }
+	operator FString() { return text.ToString(); }
+};
+
 bool FInputActionMappingCustomizationExtended::Register()
 {
 	FModuleManager::LoadModuleChecked<FDetailCustomizationsModule>("DetailCustomizations");
@@ -65,7 +74,7 @@ void FInputActionMappingCustomizationExtended::CustomizeChildren(TSharedRef<clas
 	TSharedPtr<IPropertyHandle> CmdHandle = InStructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInputActionKeyMapping, bCmd));
 	TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FInputActionMappingCustomizationExtended::RemoveActionMappingButton_OnClick),
 		LOCTEXT("RemoveActionMappingToolTip", "Removes Action Mapping"));
-	StructBuilder.AddChildContent(LOCTEXT("KeySearchStr", "Key").ToString())
+	StructBuilder.AddChildContent(TextOrStringConverter(LOCTEXT("KeySearchStr", "Key")))
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
@@ -182,7 +191,7 @@ void FInputAxisMappingCustomizationExtended::CustomizeChildren(TSharedRef<class 
 	TSharedPtr<IPropertyHandle> ScaleHandle = InStructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FInputAxisKeyMapping, Scale));
 	TSharedRef<SWidget> RemoveButton = PropertyCustomizationHelpers::MakeDeleteButton(FSimpleDelegate::CreateSP(this, &FInputAxisMappingCustomizationExtended::RemoveAxisMappingButton_OnClick),
 		LOCTEXT("RemoveAxisMappingToolTip", "Removes Axis Mapping"));
-	StructBuilder.AddChildContent(LOCTEXT("KeySearchStr", "Key").ToString())
+	StructBuilder.AddChildContent(TextOrStringConverter(LOCTEXT("KeySearchStr", "Key")))
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
