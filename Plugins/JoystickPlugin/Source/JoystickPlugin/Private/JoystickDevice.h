@@ -24,7 +24,6 @@ class FJoystickDevice : public IInputDevice, public IJoystickEventInterface
 {
 public:
 	FJoystickDevice();
-	~FJoystickDevice();
 
 	void Tick(float DeltaTime) override;
 	void SendControllerEvents() override;
@@ -49,7 +48,7 @@ public:
 private:
 	bool AddInputDevice(FDeviceId DeviceId);
 
-	FDeviceSDL *DeviceSDL = nullptr;
+	TSharedPtr<FDeviceSDL> DeviceSDL;
 	TArray<TWeakObjectPtr<UObject>> EventListeners;
 
 	TMap<FDeviceId, TArray<FKey>> DeviceButtonKeys;

@@ -14,26 +14,10 @@ FJoystickDevice::FJoystickDevice()
 {
 	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::StartupModule() creating Device SDL"));
 
-	DeviceSDL = new FDeviceSDL(this);
+	DeviceSDL = MakeShareable(new FDeviceSDL(this));
 
 	// Trigger initial SDL_JOYDEVICEADDED events
-	DeviceSDL->update();
-}
-
-FJoystickDevice::~FJoystickDevice()
-{
-	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::ShutdownModule()"));
-	check(DeviceSDL != nullptr);
-
-	UE_LOG(JoystickPluginLog, Log, TEXT("Attempting to remove devices..."));
-
-	for (auto const & device : InputDevices) {
-		JoystickUnplugged(device.Key);
-	}
-
-	delete DeviceSDL;
-	DeviceSDL = nullptr;
-
+	DeviceSDL->Update();
 }
 
 bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
@@ -60,7 +44,7 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 			deviceInfo.ProductName = deviceInfoSDL->Name;
 			deviceInfo.DeviceName = deviceInfo.ProductName.Replace(TEXT(" "), TEXT(""));
 
-			deviceInfo.IsGameController = deviceInfoSDL->bIsGameController;
+			deviceInfo.IsGameController = deviceInfoSDL->GameController != nullptr;
 
 			UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *deviceInfo.DeviceName, DeviceId.value);
 			InputDevices.Add(DeviceId, deviceInfo);
@@ -151,7 +135,6 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 void FJoystickDevice::JoystickPluggedIn(FDeviceIndex DeviceIndex)
 {
 	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), DeviceIndex.value);
-	check(DeviceSDL != nullptr);
 
 	FDeviceInfoSDL DeviceInfoSDL;
 	if (DeviceSDL->InitDevice(DeviceIndex, DeviceInfoSDL))
@@ -185,7 +168,6 @@ void FJoystickDevice::JoystickPluggedIn(FDeviceIndex DeviceIndex)
 
 void FJoystickDevice::JoystickUnplugged(FDeviceId DeviceId)
 {
-	check(DeviceSDL != nullptr);
 	DeviceSDL->DoneDevice(DeviceId);
 
 	InputDevices[DeviceId].Connected = false;
@@ -304,17 +286,18 @@ void FJoystickDevice::Tick(float DeltaTime)
 
 void FJoystickDevice::SendControllerEvents()
 {
-	check(DeviceSDL != nullptr);
-
-	for (auto & Device : InputDevices) {
-		if (InputDevices.Contains(Device.Key)) {
-			if (InputDevices[Device.Key].Connected) {
+	for (auto & Device : InputDevices) 
+	{
+		if (InputDevices.Contains(Device.Key)) 
+		{
+			if (InputDevices[Device.Key].Connected) 
+			{
 				PreviousState[Device.Key] = CurrentState[Device.Key];
 			}
 		}
 	}
 
-	DeviceSDL->update();
+	DeviceSDL->Update();
 
 	// Clean up weak references
 	for (int i = 0; i < EventListeners.Num(); i++)

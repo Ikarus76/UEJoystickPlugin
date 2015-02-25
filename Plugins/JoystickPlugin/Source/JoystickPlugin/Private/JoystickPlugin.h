@@ -2,6 +2,7 @@
 
 #include <InputDevice.h>
 
+#include "IJoystickPlugin.h"
 #include "JoystickDevice.h"
 
 class FJoystickPlugin : public IJoystickPlugin
