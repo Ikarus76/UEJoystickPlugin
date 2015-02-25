@@ -7,21 +7,10 @@
 * of the BSD license.  See the LICENSE file for details.
 */
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "JoystickPluginPrivatePCH.h"
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
+#include "DeviceSDL.h"
 
 DEFINE_LOG_CATEGORY(JoystickPluginLog);
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 DeviceSDL::DeviceSDL(JoystickEventInterface * eventInterface) :
 	hasJoysticks(false),
@@ -36,19 +25,11 @@ DeviceSDL::DeviceSDL(JoystickEventInterface * eventInterface) :
 	initSDL();
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 DeviceSDL::~DeviceSDL()
 {
 	UE_LOG(JoystickPluginLog, Log, TEXT("DeviceSDL Closing"));
 	doneSDL();
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 
 void DeviceSDL::initSDL()
@@ -92,10 +73,6 @@ void DeviceSDL::doneSDL()
 	}
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 void DeviceSDL::resetDevices()
 {
 	for (auto & device : m_Devices) {
@@ -107,33 +84,25 @@ void DeviceSDL::resetDevice(DeviceId iDevice)
 {	
 	if (m_Devices.Contains(iDevice)) {
 		m_Devices[iDevice].deviceId = iDevice;
-		m_Devices[iDevice].gameController = NULL;
-		m_Devices[iDevice].haptic = NULL;
+		m_Devices[iDevice].gameController = nullptr;
+		m_Devices[iDevice].haptic = nullptr;
 		m_Devices[iDevice].hasHaptic = false;
 		m_Devices[iDevice].isConnected = false;
 		m_Devices[iDevice].isGameController = false;
 		m_Devices[iDevice].isJoystick = false;
-		m_Devices[iDevice].joystick = NULL;
+		m_Devices[iDevice].joystick = nullptr;
 		m_Devices[iDevice].strName = "unknown";
 	}	
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 sDeviceInfoSDL * DeviceSDL::getDevice(DeviceId iDevice)
 {
-	sDeviceInfoSDL *result = NULL;
+	sDeviceInfoSDL *result = nullptr;
 	if (m_Devices[iDevice].isConnected) {
 		result = &(m_Devices[iDevice]);
 	}
 	return result;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 bool DeviceSDL::initDevice(DeviceIndex iDevice, sDeviceInfoSDL &deviceInfo)
 {
@@ -208,23 +177,23 @@ bool DeviceSDL::doneDevice(DeviceId deviceId)
 
 	sDeviceInfoSDL &deviceInfo = m_Devices[deviceId];
 
-	if (deviceInfo.haptic != NULL) {
+	if (deviceInfo.haptic != nullptr) {
 		SDL_HapticClose(deviceInfo.haptic);
-		deviceInfo.haptic = NULL;
+		deviceInfo.haptic = nullptr;
 		deviceInfo.hasHaptic = false;
 	}
 
-	if (deviceInfo.joystick != NULL) {
+	if (deviceInfo.joystick != nullptr) {
 		SDL_JoystickClose(deviceInfo.joystick);
-		deviceInfo.joystick = NULL;
+		deviceInfo.joystick = nullptr;
 		deviceInfo.isJoystick = false;
 		deviceInfo.isConnected = false;
 		result = true;
 	}
 
-	if (deviceInfo.gameController != NULL) {
+	if (deviceInfo.gameController != nullptr) {
 		SDL_GameControllerClose(deviceInfo.gameController);
-		deviceInfo.gameController = NULL;
+		deviceInfo.gameController = nullptr;
 		deviceInfo.isGameController = false;
 		deviceInfo.isConnected = false;
 		result = true;
@@ -235,10 +204,6 @@ bool DeviceSDL::doneDevice(DeviceId deviceId)
 	return result;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 int32 DeviceSDL::getNumberOfDevices()
 {
 	// gamecontroller are joysticks...
@@ -246,10 +211,6 @@ int32 DeviceSDL::getNumberOfDevices()
 	UE_LOG(JoystickPluginLog, Log, TEXT("DeviceSDL::getNumberOfDevices() %i"), numberOfDevices);
 	return numberOfDevices;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 FString DeviceSDL::getDeviceName(DeviceId InputDeviceIndex)
 {
@@ -259,10 +220,6 @@ FString DeviceSDL::getDeviceName(DeviceId InputDeviceIndex)
 	}
 	return result;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 Sint32 DeviceSDL::getDeviceInstanceId(DeviceId InputDeviceIndex)
 {
@@ -298,10 +255,6 @@ FGuid DeviceSDL::getDeviceGUIDtoGUID(DeviceId InputDeviceIndex)
 	return result;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 int32 DeviceSDL::getNumberOfAxes(DeviceId InputDeviceIndex)
 {
 	int32 result = 0;
@@ -314,10 +267,6 @@ int32 DeviceSDL::getNumberOfAxes(DeviceId InputDeviceIndex)
 
 	return result;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 int32 DeviceSDL::getNumberOfButtons(DeviceId InputDeviceIndex)
 {
@@ -332,10 +281,6 @@ int32 DeviceSDL::getNumberOfButtons(DeviceId InputDeviceIndex)
 	return result;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 int32 DeviceSDL::getNumberOfHats(DeviceId InputDeviceIndex)
 {
 	int32 result = 0;
@@ -349,10 +294,6 @@ int32 DeviceSDL::getNumberOfHats(DeviceId InputDeviceIndex)
 	return result;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 int32 DeviceSDL::getNumberOfBalls(DeviceId InputDeviceIndex)
 {
 	int32 result = 0;
@@ -365,10 +306,6 @@ int32 DeviceSDL::getNumberOfBalls(DeviceId InputDeviceIndex)
 
 	return result;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 JoystickPOVDirection SDL_hatValToDirection(int8 value)
 {
@@ -387,10 +324,6 @@ JoystickPOVDirection SDL_hatValToDirection(int8 value)
 		return DIRECTION_NONE;
 	}
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 bool DeviceSDL::getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, DeviceId InputDeviceIndex)
 {
@@ -421,10 +354,10 @@ bool DeviceSDL::getDeviceState(FJoystickState &InputData, FJoystickInfo &Joystic
 			InputData.AxisArray.Add(0);
 			int rawValue = SDL_JoystickGetAxis(device.joystick, iAxes);
 			if (rawValue < 0) {
-				scaledValue = (rawValue) / 32768.0;
+				scaledValue = rawValue / 32768.0;
 			}
 			else {
-				scaledValue = (rawValue) / 32767.0;
+				scaledValue = rawValue / 32767.0;
 			}
 			InputData.AxisArray[iAxes] = scaledValue;
 		}
@@ -456,29 +389,21 @@ bool DeviceSDL::getDeviceState(FJoystickState &InputData, FJoystickInfo &Joystic
 	return result;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 bool DeviceSDL::getDeviceSDL(DeviceId iDevice, sDeviceInfoSDL &deviceInfo)
 {
 	bool result = false;
 
-	if (m_Devices[iDevice].gameController != NULL) {
+	if (m_Devices[iDevice].gameController != nullptr) {
 		deviceInfo = m_Devices[iDevice];
 		result = true;
 	}
-	if (m_Devices[iDevice].joystick != NULL) {
+	if (m_Devices[iDevice].joystick != nullptr) {
 		deviceInfo = m_Devices[iDevice];
 		result = true;
 	}
 	
 	return result;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
 void DeviceSDL::update()
 {
@@ -531,8 +456,4 @@ void DeviceSDL::update()
 		}
 	}
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
 
