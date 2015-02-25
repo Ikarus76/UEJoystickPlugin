@@ -2,8 +2,38 @@
 
 #include "JoystickInterface.generated.h"
 
+struct FDeviceIndex
+{
+	int32 value = -1;
+	explicit FDeviceIndex(int32 v) : value(v) {}
+	bool operator==(const FDeviceIndex other) const { return value == other.value; };
+};
+
+struct FInstanceId
+{
+	int32 value = -1;
+	explicit FInstanceId(int32 v) : value(v) {}
+	bool operator==(FInstanceId other) const { return value == other.value; };
+};
+FORCEINLINE uint32 GetTypeHash(FInstanceId instanceId)
+{
+	return GetTypeHash(instanceId.value);
+}
+
+struct FDeviceId
+{
+	int32 value = -1;
+	explicit FDeviceId(int32 v) : value(v) {}
+	bool operator==(FDeviceId other) const { return value == other.value; };
+};
+FORCEINLINE uint32 GetTypeHash(FDeviceId deviceId)
+{
+	return GetTypeHash(deviceId.value);
+}
+
+
 UENUM(BlueprintType)
-enum EInputType
+enum class EInputType : uint8
 {
 	INPUTTYPE_UNKNOWN,
 	INPUTTYPE_JOYSTICK,
@@ -12,7 +42,7 @@ enum EInputType
 
 
 UENUM(BlueprintType)
-enum JoystickPOVDirection
+enum class EJoystickPOVDirection : uint8
 {
 	DIRECTION_NONE,
 	DIRECTION_UP,
@@ -25,7 +55,7 @@ enum JoystickPOVDirection
 	DIRECTION_UP_LEFT,
 };
 
-FVector2D POVAxis(JoystickPOVDirection povValue);
+FVector2D POVAxis(EJoystickPOVDirection povValue);
 
 USTRUCT(BlueprintType)
 struct FJoystickState
@@ -46,7 +76,7 @@ struct FJoystickState
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
 	int32 NumberOfHats;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
-	TArray<int32> HatsArray;
+	TArray<EJoystickPOVDirection> HatsArray;
 
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
 	int32 NumberOfBalls;
@@ -62,7 +92,7 @@ struct FJoystickState
 	TArray<int32> ButtonsArray;
 
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
-	TArray<TEnumAsByte<JoystickPOVDirection>> POV;
+	TArray<EJoystickPOVDirection> POV;
 /*
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
 		FVector2D Slider = FVector2D(0, 0);
@@ -93,7 +123,7 @@ struct FJoystickInfo
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
 	bool Connected = false;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
-	TArray<TEnumAsByte<EInputType>> InputType;
+	TArray<EInputType> InputType;
 };
 
 UINTERFACE(MinimalAPI)
@@ -122,7 +152,7 @@ public:
 	void JoystickButtonsArrayChanged(int32 index, bool value, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
-	void JoystickHatsArrayChanged(int32 index, float value, FJoystickState state);
+	void JoystickHatsArrayChanged(int32 index, EJoystickPOVDirection value, FJoystickState state);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Joystick Interface Events")
 	void JoystickBallsArrayChanged(int32 index, int32 dx, int32 dy, FJoystickState state);

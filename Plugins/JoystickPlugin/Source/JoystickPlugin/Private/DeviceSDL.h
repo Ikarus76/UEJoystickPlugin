@@ -14,74 +14,60 @@
 #include "SDL2/SDL_gamecontroller.h"
 
 #include "IJoystickPlugin.h"
-#include "FJoystickPlugin.h"
+#include "JoystickInterface.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 
-struct sDeviceInfoSDL
+class IJoystickEventInterface;
+
+struct FDeviceInfoSDL
 {
-	DeviceIndex deviceIndex {0};
-	DeviceId deviceId {0};
-	InstanceId instanceId {0};
+	FDeviceIndex DeviceIndex {0};
+	FDeviceId DeviceId {0};
+	FInstanceId InstanceId {0};
 
-	bool isConnected = false;
+	bool bIsConnected = false;
 
-	FString strName = "unknown";
+	FString Name = "unknown";
 	
-	bool isGameController = false;
-	bool isJoystick = false;
-	bool hasHaptic = false;
+	bool bIsGameController = false;
+	bool bIsJoystick = false;
+	bool bHasHaptic = false;
 
-	SDL_Haptic *haptic = nullptr;
-	SDL_Joystick *joystick = nullptr;
-	SDL_GameController *gameController = nullptr;
+	SDL_Haptic *Haptic = nullptr;
+	SDL_Joystick *Joystick = nullptr;
+	SDL_GameController *GameController = nullptr;
 };
 
-class DeviceSDL
+class FDeviceSDL
 {
 
 public:
-	int32 getNumberOfDevices();
-	
-	int32 getNumberOfAxes(DeviceId device = DeviceId(0));
-	int32 getNumberOfButtons(DeviceId device = DeviceId(0));
-	int32 getNumberOfHats(DeviceId device = DeviceId(0));
-	int32 getNumberOfBalls(DeviceId device = DeviceId(0));
+	bool GetDeviceState(FJoystickState &InputData, const FJoystickInfo &JoystickInfo, FDeviceId device);
 
-	bool getDeviceSDL(DeviceId device, sDeviceInfoSDL &deviceInfo);
-	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, DeviceId device);
+	static FString DeviceGUIDtoString(FDeviceIndex device);
+	static FGuid DeviceGUIDtoGUID(FDeviceIndex device);
 
-	FString getDeviceName(DeviceId device = DeviceId(0));
+	void ResetDevice(FDeviceId device);
 
-	Sint32 getDeviceInstanceId(DeviceId device = DeviceId(0));
-	FString getDeviceGUIDtoString(DeviceId device = DeviceId(0));
-	FGuid getDeviceGUIDtoGUID(DeviceId device = DeviceId(0));
-
-	void resetDevices();
-	void resetDevice(DeviceId device = DeviceId(0));
-
-	bool initDevice(DeviceIndex deviceNumber, sDeviceInfoSDL &deviceInfo);
-	sDeviceInfoSDL * getDevice(DeviceId iDevice = DeviceId(0));
-	bool doneDevice(DeviceId deviceInfo);
+	bool InitDevice(FDeviceIndex deviceNumber, FDeviceInfoSDL &deviceInfo);
+	FDeviceInfoSDL * GetDevice(FDeviceId iDevice);
+	bool DoneDevice(FDeviceId deviceInfo);
 
 	void update();
 
-	DeviceSDL(JoystickEventInterface * eventInterface);
-	virtual ~DeviceSDL();
+	FDeviceSDL(IJoystickEventInterface * eventInterface);
+	virtual ~FDeviceSDL();
 
 protected:
-	void initSDL();
-	void doneSDL();
+	void InitSDL();
+	void DoneSDL();
 
 private:
-	bool hasJoysticks;
-	bool hasGameController;
-	bool hasHaptic;
-
-	TMap<DeviceId, sDeviceInfoSDL> m_Devices;	
-	TMap<InstanceId, DeviceId> m_DeviceMapping;
+	TMap<FDeviceId, FDeviceInfoSDL> Devices;	
+	TMap<FInstanceId, FDeviceId> DeviceMapping;
 	
-	SDL_Event m_Event_SDL;
+	SDL_Event Event;
 
-	JoystickEventInterface* eventInterface;
+	IJoystickEventInterface* EventInterface;
 };

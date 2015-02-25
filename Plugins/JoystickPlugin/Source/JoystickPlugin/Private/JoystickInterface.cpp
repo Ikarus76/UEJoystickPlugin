@@ -16,26 +16,26 @@ FString IJoystickInterface::ToString()
 	return "IJoystickInterface::ToString()";
 }
 
-FVector2D POVAxis(JoystickPOVDirection povValue)
+FVector2D POVAxis(EJoystickPOVDirection povValue)
 {
 	switch (povValue){
-	case DIRECTION_NONE:
+	case EJoystickPOVDirection::DIRECTION_NONE:
 		return FVector2D(0, 0);
-	case DIRECTION_UP:
+	case EJoystickPOVDirection::DIRECTION_UP:
 		return FVector2D(0, 1);
-	case DIRECTION_UP_RIGHT:
+	case EJoystickPOVDirection::DIRECTION_UP_RIGHT:
 		return FVector2D(1, 1);
-	case DIRECTION_RIGHT:
+	case EJoystickPOVDirection::DIRECTION_RIGHT:
 		return FVector2D(1, 0);
-	case DIRECTION_DOWN_RIGHT:
+	case EJoystickPOVDirection::DIRECTION_DOWN_RIGHT:
 		return FVector2D(1, -1);
-	case DIRECTION_DOWN:
+	case EJoystickPOVDirection::DIRECTION_DOWN:
 		return FVector2D(0, -1);
-	case DIRECTION_DOWN_LEFT:
+	case EJoystickPOVDirection::DIRECTION_DOWN_LEFT:
 		return FVector2D(-1, -1);
-	case DIRECTION_LEFT:
+	case EJoystickPOVDirection::DIRECTION_LEFT:
 		return FVector2D(-1, 0);
-	case DIRECTION_UP_LEFT:
+	case EJoystickPOVDirection::DIRECTION_UP_LEFT:
 		return FVector2D(-1, 1);
 	default:
 		return FVector2D(0, 0);

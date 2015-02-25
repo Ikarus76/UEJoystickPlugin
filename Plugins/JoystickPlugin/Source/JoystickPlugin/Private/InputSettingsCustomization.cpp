@@ -3,7 +3,6 @@
 
 #include "InputSettingsCustomization.h"
 
-#include <Engine.h>
 #include <Editor.h>
 #include <DetailCustomizations.h>
 #include <PropertyCustomizationHelpers.h>
