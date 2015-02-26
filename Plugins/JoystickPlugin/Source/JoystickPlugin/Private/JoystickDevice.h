@@ -17,7 +17,7 @@ public:
 	virtual void JoystickButton(FDeviceId DeviceId, int32 Button, bool Pressed) = 0;
 	virtual void JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value) = 0;
 	virtual void JoystickHat(FDeviceId DeviceId, int32 Hat, EJoystickPOVDirection Value) = 0;
-	virtual void JoystickBall(FDeviceId DeviceId, int32 Ball, int DeltaX, int DeltaY) = 0;
+	virtual void JoystickBall(FDeviceId DeviceId, int32 Ball, FVector2D Delta) = 0;
 };
 
 class FJoystickDevice : public IInputDevice, public IJoystickEventInterface
@@ -39,14 +39,14 @@ public:
 	virtual void JoystickButton(FDeviceId DeviceId, int32 Button, bool Pressed) override;
 	virtual void JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value) override;
 	virtual void JoystickHat(FDeviceId DeviceId, int32 Hat, EJoystickPOVDirection Value) override;
-	virtual void JoystickBall(FDeviceId DeviceId, int32 Ball, int DeltaX, int DeltaY) override;
-
+	virtual void JoystickBall(FDeviceId DeviceId, int32 Ball, FVector2D Delta) override;
 	TMap<FDeviceId, FJoystickState> CurrentState;
 	TMap<FDeviceId, FJoystickState> PreviousState;
 
 	TMap<FDeviceId, FJoystickInfo> InputDevices;
 private:
 	bool AddInputDevice(FDeviceId DeviceId);
+	void EmitEvents(const FJoystickState& previous, const FJoystickState& current);
 
 	TSharedPtr<FDeviceSDL> DeviceSDL;
 	TArray<TWeakObjectPtr<UObject>> EventListeners;
@@ -54,5 +54,5 @@ private:
 	TMap<FDeviceId, TArray<FKey>> DeviceButtonKeys;
 	TMap<FDeviceId, TArray<FKey>> DeviceAxisKeys;
 	TMap<FDeviceId, TArray<FKey>> DeviceHatKeys[2];
-	//TMap<DeviceId, TArray<FKey>> DeviceBallKeys[2];
+	TMap<FDeviceId, TArray<FKey>> DeviceBallKeys[2];
 };

@@ -54,7 +54,7 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 			{
 				// create FKeyDetails for axis
 				DeviceAxisKeys.Add(DeviceId);
-				for (int iAxis = 0; iAxis < newDeviceState.NumberOfAxis; iAxis++)
+				for (int iAxis = 0; iAxis < newDeviceState.Axes.Num(); iAxis++)
 				{
 					FString strName = FString::Printf(TEXT("Joystick_%s_Axis%d"), *deviceInfo.DeviceName, iAxis);
 					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
@@ -69,7 +69,7 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 
 				// create FKeyDetails for buttons
 				DeviceButtonKeys.Add(DeviceId);
-				for (int iButton = 0; iButton < newDeviceState.NumberOfButtons; iButton++)
+				for (int iButton = 0; iButton < newDeviceState.Buttons.Num(); iButton++)
 				{
 					FString strName = FString::Printf(TEXT("Joystick_%s_Button%d"), *deviceInfo.DeviceName, iButton);
 					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
@@ -88,7 +88,7 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 				for (int iAxis = 0; iAxis < 2; iAxis++)
 				{
 					DeviceHatKeys[iAxis].Add(DeviceId);
-					for (int iHat = 0; iHat < newDeviceState.NumberOfHats; iHat++)
+					for (int iHat = 0; iHat < newDeviceState.Hats.Num(); iHat++)
 					{
 						FString strName = FString::Printf(TEXT("Joystick_%s_Hat%d_%s"), *deviceInfo.DeviceName, iHat, *_2DaxisNames[iAxis]);
 						UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
@@ -103,24 +103,24 @@ bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
 					}
 				}
 
-				/*// create FKeyDetails for balls
+				// create FKeyDetails for balls
 				for (int iAxis = 0; iAxis < 2; iAxis++)
 				{
-				deviceBallKeys[iAxis].Add(DeviceId);
-				for (int iBall = 0; iBall < newDeviceState.NumberOfBalls; iBall++)
-				{
-				FString strName = FString::Printf(TEXT("Joystick_%s_Ball%d_%s"), *strDeviceName, iBall, _2DaxisNames[iAxis]);
-				UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
-				FKey key{ *strName };
-				deviceBallKeys[iAxis][DeviceId].Add(key);
+					DeviceBallKeys[iAxis].Add(DeviceId);
+					for (int iBall = 0; iBall < newDeviceState.Balls.Num(); iBall++)
+					{
+						FString strName = FString::Printf(TEXT("Joystick_%s_Ball%d_%s"), *deviceInfo.DeviceName, iBall, *_2DaxisNames[iAxis]);
+						UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
+						FKey key{ *strName };
+						DeviceBallKeys[iAxis][DeviceId].Add(key);
 
-				if (!EKeys::GetKeyDetails(key).IsValid())
-				{
-				FText textValue = FText::Format(LOCTEXT("DeviceBall", "{0} Ball {1} {2}"), FText::FromString(strDeviceName), FText::AsNumber(iBall), FText::FromString(_2DaxisNames[iAxis]));
-				EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+						if (!EKeys::GetKeyDetails(key).IsValid())
+						{
+							FText textValue = FText::Format(LOCTEXT("DeviceBall", "{0} Ball {1} {2}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iBall), FText::FromString(_2DaxisNames[iAxis]));
+							EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+						}
+					}
 				}
-				}
-				}*/
 
 				PreviousState.Add(DeviceId, newDeviceState);
 				CurrentState.Add(DeviceId, newDeviceState);
@@ -172,7 +172,6 @@ void FJoystickDevice::JoystickUnplugged(FDeviceId DeviceId)
 
 	InputDevices[DeviceId].Connected = false;
 
-	//DelegateTick(0);
 	UE_LOG(JoystickPluginLog, Log, TEXT("Joystick %d disconnected"), DeviceId.value);
 
 	for (auto & listener : EventListeners)
@@ -199,7 +198,7 @@ bool EmitKeyDownEventForKey(FKey Key, int32 User, bool Repeat)
 
 void FJoystickDevice::JoystickButton(FDeviceId DeviceId, int32 Button, bool Pressed)
 {
-	CurrentState[DeviceId].ButtonsArray[Button] = Pressed;
+	CurrentState[DeviceId].Buttons[Button] = Pressed;
 	if (Pressed)
 		EmitKeyDownEventForKey(DeviceButtonKeys[DeviceId][Button], InputDevices[DeviceId].Player, false);
 	else
@@ -226,7 +225,7 @@ bool EmitAnalogInputEventForKey(FKey Key, float Value, int32 User, bool Repeat)
 
 void FJoystickDevice::JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value)
 {
-	CurrentState[DeviceId].AxisArray[Axis] = Value;
+	CurrentState[DeviceId].Axes[Axis] = Value;
 	EmitAnalogInputEventForKey(DeviceAxisKeys[DeviceId][Axis], Value, InputDevices[DeviceId].Player, 0);
 
 	for (auto & listener : EventListeners)
@@ -234,14 +233,14 @@ void FJoystickDevice::JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value)
 		UObject * o = listener.Get();
 		if (o != nullptr)
 		{
-			IJoystickInterface::Execute_JoystickAxisArrayChanged(o, Axis, CurrentState[DeviceId].AxisArray[Axis], PreviousState[DeviceId].AxisArray[Axis], CurrentState[DeviceId], PreviousState[DeviceId]);
+			IJoystickInterface::Execute_JoystickAxisChanged(o, Axis, CurrentState[DeviceId].Axes[Axis], PreviousState[DeviceId].Axes[Axis], CurrentState[DeviceId], PreviousState[DeviceId]);
 		}
 	}
 }
 
 void FJoystickDevice::JoystickHat(FDeviceId DeviceId, int32 Hat, EJoystickPOVDirection Value)
 {
-	CurrentState[DeviceId].HatsArray[Hat] = Value;
+	CurrentState[DeviceId].Hats[Hat] = Value;
 
 	FVector2D povAxis = POVAxis(Value);
 	EmitAnalogInputEventForKey(DeviceHatKeys[0][DeviceId][Hat], povAxis.X, InputDevices[DeviceId].Player, 0);
@@ -252,7 +251,7 @@ void FJoystickDevice::JoystickHat(FDeviceId DeviceId, int32 Hat, EJoystickPOVDir
 		UObject * o = listener.Get();
 		if (o != nullptr)
 		{
-			IJoystickInterface::Execute_JoystickHatsArrayChanged(o, Hat, Value, CurrentState[DeviceId]);
+			IJoystickInterface::Execute_JoystickHatChanged(o, Hat, Value, CurrentState[DeviceId]);
 		}
 	}
 }
@@ -263,19 +262,57 @@ bool EmitPointerEventForKey(int32 PointerIndex, const FVector2D &Value)
 	return FSlateApplication::Get().ProcessMouseMoveEvent(pointerEvent);
 }
 
-void FJoystickDevice::JoystickBall(FDeviceId DeviceId, int32 Ball, int DeltaX, int DeltaY)
+void FJoystickDevice::JoystickBall(FDeviceId DeviceId, int32 Ball, FVector2D Delta)
 {
-	// EmitPointerEventForKey(ball, FVector2D(dx, dy)); TODO: Test how this works with an actual "ball"
+	CurrentState[DeviceId].Balls[Ball] = Delta;
+
+	//EmitPointerEventForKey(ball, FVector2D(dx, dy)); Maybe try something like this instead?
+
+	EmitAnalogInputEventForKey(DeviceBallKeys[0][DeviceId][Ball], Delta.X, InputDevices[DeviceId].Player, 0);
+	EmitAnalogInputEventForKey(DeviceBallKeys[1][DeviceId][Ball], Delta.Y, InputDevices[DeviceId].Player, 0);
 
 	for (auto & listener : EventListeners)
 	{
 		UObject * o = listener.Get();
 		if (o != nullptr)
 		{
-			IJoystickInterface::Execute_JoystickBallsArrayChanged(o, Ball, DeltaX, DeltaY, CurrentState[DeviceId]);
+			IJoystickInterface::Execute_JoystickBallMoved(o, Ball, Delta, CurrentState[DeviceId]);
 		}
 	}
 }
+
+void FJoystickDevice::EmitEvents(const FJoystickState &previous, const FJoystickState &current)
+{
+	for (int iButton = 0; iButton < current.Buttons.Num(); iButton++)
+	{
+		if (previous.Buttons[iButton] != current.Buttons[iButton])
+		{
+			JoystickButton(FDeviceId(current.DeviceId), iButton, current.Buttons[iButton]);
+		}
+	}
+	for (int iAxis = 0; iAxis < current.Axes.Num(); iAxis++)
+	{
+		if (previous.Axes[iAxis] != current.Axes[iAxis])
+		{
+			JoystickAxis(FDeviceId(current.DeviceId), iAxis, current.Axes[iAxis]);
+		}
+	}
+	for (int iHat = 0; iHat < current.Hats.Num(); iHat++)
+	{
+		if (previous.Hats[iHat] != current.Hats[iHat])
+		{
+			JoystickHat(FDeviceId(current.DeviceId), iHat, current.Hats[iHat]);
+		}
+	}
+	for (int iBall = 0; iBall < current.Balls.Num(); iBall++)
+	{
+		if (current.Balls[iBall] != FVector2D::ZeroVector)
+		{
+			JoystickBall(FDeviceId(current.DeviceId), iBall, current.Balls[iBall]);
+		}
+	}
+}
+
 
 // IInputDevice implementation
 
@@ -292,7 +329,12 @@ void FJoystickDevice::SendControllerEvents()
 		{
 			if (InputDevices[Device.Key].Connected) 
 			{
-				PreviousState[Device.Key] = CurrentState[Device.Key];
+				PreviousState[Device.Key] = FJoystickState(CurrentState[Device.Key]);
+
+				for (int iBall = 0; iBall < CurrentState[Device.Key].Balls.Num(); iBall++)
+				{
+					CurrentState[Device.Key].Balls[iBall] = FVector2D::ZeroVector;
+				}
 			}
 		}
 	}

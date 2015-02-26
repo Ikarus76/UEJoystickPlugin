@@ -9,17 +9,17 @@
 
 #pragma once
 
-// @third party code - BEGIN SDL
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_joystick.h"
-#include "SDL2/SDL_gamecontroller.h"
-// @third party code - END SDL
-
 #include "JoystickInterface.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 
 class IJoystickEventInterface;
+struct _SDL_Joystick;
+typedef struct _SDL_Joystick SDL_Joystick;
+struct _SDL_Haptic;
+typedef struct _SDL_Haptic SDL_Haptic;
+struct _SDL_GameController;
+typedef struct _SDL_GameController SDL_GameController;
 
 struct FDeviceInfoSDL
 {
@@ -56,8 +56,6 @@ public:
 private:
 	TMap<FDeviceId, FDeviceInfoSDL> Devices;	
 	TMap<FInstanceId, FDeviceId> DeviceMapping;
-	
-	SDL_Event Event;
 
 	IJoystickEventInterface* EventInterface;
 };

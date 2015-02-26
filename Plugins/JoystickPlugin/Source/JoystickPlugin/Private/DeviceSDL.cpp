@@ -11,6 +11,12 @@
 #include "DeviceSDL.h"
 #include "JoystickDevice.h"
 
+// @third party code - BEGIN SDL
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_joystick.h"
+#include "SDL2/SDL_gamecontroller.h"
+// @third party code - END SDL
+
 DEFINE_LOG_CATEGORY(JoystickPluginLog);
 
 FDeviceSDL::FDeviceSDL(IJoystickEventInterface * eventInterface) :
@@ -204,45 +210,37 @@ bool FDeviceSDL::GetDeviceState(FJoystickState &OutInputData, const FJoystickInf
 	{
 		SDL_JoystickUpdate();
 
-		OutInputData.NumberOfBalls = SDL_JoystickNumBalls(Device.Joystick);
-		OutInputData.NumberOfHats = SDL_JoystickNumHats(Device.Joystick);
-		OutInputData.NumberOfButtons = SDL_JoystickNumButtons(Device.Joystick);
-		OutInputData.NumberOfAxis = SDL_JoystickNumAxes(Device.Joystick);
-
-		// clear TArray add zero change value
-		// AXES
-		OutInputData.AxisArray.Empty(0);
-		float scaledValue = 0;
-		for (int iAxes = 0; iAxes < OutInputData.NumberOfAxis; iAxes++)
+		int NumberOfAxis = SDL_JoystickNumAxes(Device.Joystick);
+		OutInputData.Axes.Empty(NumberOfAxis);
+		for (int iAxes = 0; iAxes < NumberOfAxis; iAxes++)
 		{
-			OutInputData.AxisArray.Add(0);
 			int rawValue = SDL_JoystickGetAxis(Device.Joystick, iAxes);
-			if (rawValue < 0)
-			{
-				scaledValue = rawValue / 32768.0;
-			}
-			else 
-			{
-				scaledValue = rawValue / 32767.0;
-			}
-			OutInputData.AxisArray[iAxes] = scaledValue;
+			float scaledValue = rawValue / (rawValue < 0 ? 32768.0 : 32767.0);
+			OutInputData.Axes.Add(scaledValue);
 		}
 
-		// BUTTONS
-		OutInputData.ButtonsArray.Empty(OutInputData.NumberOfButtons);
-		for (int iButton = 0; iButton < OutInputData.NumberOfButtons; iButton++)
+		int NumberOfButtons = SDL_JoystickNumButtons(Device.Joystick);
+		OutInputData.Buttons.Empty(NumberOfButtons);
+		for (int iButton = 0; iButton < NumberOfButtons; iButton++)
 		{
-			OutInputData.ButtonsArray.Add(SDL_JoystickGetButton(Device.Joystick, iButton));
+			OutInputData.Buttons.Add(SDL_JoystickGetButton(Device.Joystick, iButton) == 1);
 		}
 
-		// HATS
-		OutInputData.HatsArray.Empty(OutInputData.NumberOfHats);
-		OutInputData.POV.Empty(OutInputData.NumberOfHats);
-		for (int iHat = 0; iHat < OutInputData.NumberOfHats; iHat++)
+		int NumberOfHats = SDL_JoystickNumHats(Device.Joystick);
+		OutInputData.Hats.Empty(NumberOfHats);
+		for (int iHat = 0; iHat < NumberOfHats; iHat++)
 		{
-			Uint8 hatState = SDL_JoystickGetHat(Device.Joystick, iHat);
-			OutInputData.HatsArray.Add(SDL_hatValToDirection(hatState));
-			OutInputData.POV.Add(SDL_hatValToDirection(hatState));
+			int8 hatState = SDL_JoystickGetHat(Device.Joystick, iHat);
+			OutInputData.Hats.Add(SDL_hatValToDirection(hatState));
+		}
+
+		int NumberOfBalls = SDL_JoystickNumBalls(Device.Joystick);
+		OutInputData.Balls.Empty(NumberOfBalls);
+		for (int iBall = 0; iBall < NumberOfBalls; iBall++)
+		{
+			int dx, dy;
+			SDL_JoystickGetBall(Device.Joystick, iBall, &dx, &dy);
+			OutInputData.Balls.Add(FVector2D(dx, dy));
 		}
 	}
 	if (Device.GameController)
@@ -260,6 +258,7 @@ bool FDeviceSDL::GetDeviceState(FJoystickState &OutInputData, const FJoystickInf
 
 void FDeviceSDL::Update()
 {
+	SDL_Event Event;
 	while (SDL_PollEvent(&Event))
 	{
 		switch (Event.type)
@@ -300,7 +299,7 @@ void FDeviceSDL::Update()
 			case SDL_JOYBALLMOTION:
 			{
 				FDeviceId deviceId = DeviceMapping[FInstanceId(Event.jball.which)];
-				EventInterface->JoystickBall(deviceId, Event.jball.ball, Event.jball.xrel, Event.jball.yrel);
+				EventInterface->JoystickBall(deviceId, Event.jball.ball, FVector2D(Event.jball.xrel, Event.jball.yrel));
 				break;
 			}
 		}
