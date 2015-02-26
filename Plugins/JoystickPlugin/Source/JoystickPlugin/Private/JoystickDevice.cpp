@@ -15,119 +15,98 @@ FJoystickDevice::FJoystickDevice()
 	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::StartupModule() creating Device SDL"));
 
 	DeviceSDL = MakeShareable(new FDeviceSDL(this));
-
-	// Trigger initial SDL_JOYDEVICEADDED events
-	DeviceSDL->Update();
+	DeviceSDL->Init();
 }
 
-bool FJoystickDevice::AddInputDevice(FDeviceId DeviceId)
+void FJoystickDevice::InitInputDevice(const FDeviceInfoSDL &Device)
 {
-	bool result = true; // be optimistic
+	FDeviceId DeviceId = Device.DeviceId;
+	FJoystickInfo DeviceInfo;
 
-	if (InputDevices.Contains(DeviceId))
+	DeviceInfo.Connected = Device.bIsConnected;
+	DeviceInfo.DeviceId = DeviceId.value;
+	DeviceInfo.Player = 0;
+
+	DeviceInfo.ProductId = FDeviceSDL::DeviceGUIDtoGUID(Device.DeviceIndex);
+	DeviceInfo.ProductName = Device.Name;
+	DeviceInfo.DeviceName = DeviceInfo.ProductName.Replace(TEXT(" "), TEXT(""));
+
+	UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *DeviceInfo.DeviceName, DeviceId.value);
+	InputDevices.Emplace(DeviceId, DeviceInfo);
+
+	FJoystickState InitialState = DeviceSDL->InitialDeviceState(DeviceId);
+	PreviousState.Emplace(DeviceId, InitialState);
+	CurrentState.Emplace(DeviceId, InitialState);
+
+	// create FKeyDetails for axis
+	DeviceAxisKeys.Emplace(DeviceId);
+	for (int iAxis = 0; iAxis < InitialState.Axes.Num(); iAxis++)
 	{
-		UE_LOG(JoystickPluginLog, Log, TEXT("already an registered device %s %i"), *InputDevices[DeviceId].DeviceName, DeviceId.value);
-		result = false;
-	}
-	else
-	{
-		FDeviceInfoSDL * deviceInfoSDL = DeviceSDL->GetDevice(DeviceId);
-		if (deviceInfoSDL != nullptr)
+		FString strName = FString::Printf(TEXT("Joystick_%s_Axis%d"), *DeviceInfo.DeviceName, iAxis);
+		UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
+		DeviceAxisKeys[DeviceId].Add(FKey(FName(*strName)));
+
+		if (!EKeys::GetKeyDetails(DeviceAxisKeys[DeviceId][iAxis]).IsValid())
 		{
-			FJoystickInfo deviceInfo;
+			FText textValue = FText::Format(LOCTEXT("DeviceAxis", "{0} Axis {1}"), FText::FromString(DeviceInfo.ProductName), FText::AsNumber(iAxis));
+			EKeys::AddKey(FKeyDetails(DeviceAxisKeys[DeviceId][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+		}
+	}
 
-			deviceInfo.Connected = deviceInfoSDL->bIsConnected;
-			deviceInfo.DeviceId = DeviceId.value;
-			deviceInfo.Player = 0;
+	// create FKeyDetails for buttons
+	DeviceButtonKeys.Emplace(DeviceId);
+	for (int iButton = 0; iButton < InitialState.Buttons.Num(); iButton++)
+	{
+		FString strName = FString::Printf(TEXT("Joystick_%s_Button%d"), *DeviceInfo.DeviceName, iButton);
+		UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
+		DeviceButtonKeys[DeviceId].Add(FKey(FName(*strName)));
 
-			deviceInfo.ProductId = FDeviceSDL::DeviceGUIDtoGUID(deviceInfoSDL->DeviceIndex);
-			deviceInfo.ProductName = deviceInfoSDL->Name;
-			deviceInfo.DeviceName = deviceInfo.ProductName.Replace(TEXT(" "), TEXT(""));
+		if (!EKeys::GetKeyDetails(DeviceButtonKeys[DeviceId][iButton]).IsValid())
+		{
+			FText textValue = FText::Format(LOCTEXT("DeviceButton", "{0} Button {1}"), FText::FromString(DeviceInfo.ProductName), FText::AsNumber(iButton));
+			EKeys::AddKey(FKeyDetails(DeviceButtonKeys[DeviceId][iButton], textValue, FKeyDetails::GamepadKey));
+		}
+	}
 
-			deviceInfo.IsGameController = deviceInfoSDL->GameController != nullptr;
+	FString _2DaxisNames[] = { TEXT("X"), TEXT("Y") };
 
-			UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *deviceInfo.DeviceName, DeviceId.value);
-			InputDevices.Add(DeviceId, deviceInfo);
+	// create FKeyDetails for hats
+	for (int iAxis = 0; iAxis < 2; iAxis++)
+	{
+		DeviceHatKeys[iAxis].Emplace(DeviceId);
+		for (int iHat = 0; iHat < InitialState.Hats.Num(); iHat++)
+		{
+			FString strName = FString::Printf(TEXT("Joystick_%s_Hat%d_%s"), *DeviceInfo.DeviceName, iHat, *_2DaxisNames[iAxis]);
+			UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
+			FKey key{ *strName };
+			DeviceHatKeys[iAxis][DeviceId].Add(key);
 
-			FJoystickState newDeviceState(DeviceId.value);
-			if (DeviceSDL->GetDeviceState(newDeviceState, InputDevices[DeviceId], DeviceId))
+			if (!EKeys::GetKeyDetails(key).IsValid())
 			{
-				// create FKeyDetails for axis
-				DeviceAxisKeys.Add(DeviceId);
-				for (int iAxis = 0; iAxis < newDeviceState.Axes.Num(); iAxis++)
-				{
-					FString strName = FString::Printf(TEXT("Joystick_%s_Axis%d"), *deviceInfo.DeviceName, iAxis);
-					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
-					DeviceAxisKeys[DeviceId].Add(FKey(FName(*strName)));
-
-					if (!EKeys::GetKeyDetails(DeviceAxisKeys[DeviceId][iAxis]).IsValid())
-					{
-						FText textValue = FText::Format(LOCTEXT("DeviceAxis", "{0} Axis {1}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iAxis));
-						EKeys::AddKey(FKeyDetails(DeviceAxisKeys[DeviceId][iAxis], textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-					}
-				}
-
-				// create FKeyDetails for buttons
-				DeviceButtonKeys.Add(DeviceId);
-				for (int iButton = 0; iButton < newDeviceState.Buttons.Num(); iButton++)
-				{
-					FString strName = FString::Printf(TEXT("Joystick_%s_Button%d"), *deviceInfo.DeviceName, iButton);
-					UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
-					DeviceButtonKeys[DeviceId].Add(FKey(FName(*strName)));
-
-					if (!EKeys::GetKeyDetails(DeviceButtonKeys[DeviceId][iButton]).IsValid())
-					{
-						FText textValue = FText::Format(LOCTEXT("DeviceButton", "{0} Button {1}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iButton));
-						EKeys::AddKey(FKeyDetails(DeviceButtonKeys[DeviceId][iButton], textValue, FKeyDetails::GamepadKey));
-					}
-				}
-
-				FString _2DaxisNames[] = { TEXT("X"), TEXT("Y") };
-
-				// create FKeyDetails for hats
-				for (int iAxis = 0; iAxis < 2; iAxis++)
-				{
-					DeviceHatKeys[iAxis].Add(DeviceId);
-					for (int iHat = 0; iHat < newDeviceState.Hats.Num(); iHat++)
-					{
-						FString strName = FString::Printf(TEXT("Joystick_%s_Hat%d_%s"), *deviceInfo.DeviceName, iHat, *_2DaxisNames[iAxis]);
-						UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
-						FKey key{ *strName };
-						DeviceHatKeys[iAxis][DeviceId].Add(key);
-
-						if (!EKeys::GetKeyDetails(key).IsValid())
-						{
-							FText textValue = FText::Format(LOCTEXT("DeviceHat", "{0} Hat {1} {2}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iHat), FText::FromString(_2DaxisNames[iAxis]));
-							EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-						}
-					}
-				}
-
-				// create FKeyDetails for balls
-				for (int iAxis = 0; iAxis < 2; iAxis++)
-				{
-					DeviceBallKeys[iAxis].Add(DeviceId);
-					for (int iBall = 0; iBall < newDeviceState.Balls.Num(); iBall++)
-					{
-						FString strName = FString::Printf(TEXT("Joystick_%s_Ball%d_%s"), *deviceInfo.DeviceName, iBall, *_2DaxisNames[iAxis]);
-						UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
-						FKey key{ *strName };
-						DeviceBallKeys[iAxis][DeviceId].Add(key);
-
-						if (!EKeys::GetKeyDetails(key).IsValid())
-						{
-							FText textValue = FText::Format(LOCTEXT("DeviceBall", "{0} Ball {1} {2}"), FText::FromString(deviceInfo.ProductName), FText::AsNumber(iBall), FText::FromString(_2DaxisNames[iAxis]));
-							EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
-						}
-					}
-				}
-
-				PreviousState.Add(DeviceId, newDeviceState);
-				CurrentState.Add(DeviceId, newDeviceState);
+				FText textValue = FText::Format(LOCTEXT("DeviceHat", "{0} Hat {1} {2}"), FText::FromString(DeviceInfo.ProductName), FText::AsNumber(iHat), FText::FromString(_2DaxisNames[iAxis]));
+				EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
 			}
 		}
 	}
-	return result;
+
+	// create FKeyDetails for balls
+	for (int iAxis = 0; iAxis < 2; iAxis++)
+	{
+		DeviceBallKeys[iAxis].Emplace(DeviceId);
+		for (int iBall = 0; iBall < InitialState.Balls.Num(); iBall++)
+		{
+			FString strName = FString::Printf(TEXT("Joystick_%s_Ball%d_%s"), *DeviceInfo.DeviceName, iBall, *_2DaxisNames[iAxis]);
+			UE_LOG(JoystickPluginLog, Log, TEXT("add %s %i"), *strName, DeviceId.value);
+			FKey key{ *strName };
+			DeviceBallKeys[iAxis][DeviceId].Add(key);
+
+			if (!EKeys::GetKeyDetails(key).IsValid())
+			{
+				FText textValue = FText::Format(LOCTEXT("DeviceBall", "{0} Ball {1} {2}"), FText::FromString(DeviceInfo.ProductName), FText::AsNumber(iBall), FText::FromString(_2DaxisNames[iAxis]));
+				EKeys::AddKey(FKeyDetails(key, textValue, FKeyDetails::GamepadKey | FKeyDetails::FloatAxis));
+			}
+		}
+	}
 }
 
 //Public API Implementation
@@ -136,33 +115,19 @@ void FJoystickDevice::JoystickPluggedIn(FDeviceIndex DeviceIndex)
 {
 	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), DeviceIndex.value);
 
-	FDeviceInfoSDL DeviceInfoSDL;
-	if (DeviceSDL->InitDevice(DeviceIndex, DeviceInfoSDL))
+	FDeviceInfoSDL DeviceInfoSDL = DeviceSDL->InitDevice(DeviceIndex);
+	if (DeviceInfoSDL.bIsConnected)
 	{
-		if (DeviceInfoSDL.bIsConnected)
+		InitInputDevice(DeviceInfoSDL);
+		UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), DeviceInfoSDL.DeviceId.value);
+		for (auto & listener : EventListeners)
 		{
-			bool result = AddInputDevice(DeviceInfoSDL.DeviceId);
-			if (result)
+			UObject * o = listener.Get();
+			if (o != nullptr)
 			{
-				UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), DeviceInfoSDL.DeviceId.value);
-				for (auto & listener : EventListeners)
-				{
-					UObject * o = listener.Get();
-					if (o != nullptr)
-					{
-						IJoystickInterface::Execute_JoystickPluggedIn(o, DeviceInfoSDL.DeviceId.value);
-					}
-				}
-			}
-			else
-			{
-				UE_LOG(JoystickPluginLog, Log, TEXT("	FAILED add device %i"), DeviceInfoSDL.DeviceId.value);
+				IJoystickInterface::Execute_JoystickPluggedIn(o, DeviceInfoSDL.DeviceId.value);
 			}
 		}
-	}
-	else
-	{
-		UE_LOG(JoystickPluginLog, Log, TEXT("!!WARNING!! no device %i found"), DeviceIndex.value);
 	}
 }
 
@@ -323,17 +288,18 @@ void FJoystickDevice::Tick(float DeltaTime)
 
 void FJoystickDevice::SendControllerEvents()
 {
-	for (auto & Device : InputDevices) 
+	for (auto & Device : InputDevices)
 	{
-		if (InputDevices.Contains(Device.Key)) 
+		FDeviceId DeviceId = Device.Key;
+		if (InputDevices.Contains(DeviceId)) 
 		{
-			if (InputDevices[Device.Key].Connected) 
+			if (InputDevices[DeviceId].Connected) 
 			{
-				PreviousState[Device.Key] = FJoystickState(CurrentState[Device.Key]);
+				PreviousState[DeviceId] = FJoystickState(CurrentState[DeviceId]);
 
-				for (int iBall = 0; iBall < CurrentState[Device.Key].Balls.Num(); iBall++)
+				for (int iBall = 0; iBall < CurrentState[DeviceId].Balls.Num(); iBall++)
 				{
-					CurrentState[Device.Key].Balls[iBall] = FVector2D::ZeroVector;
+					CurrentState[DeviceId].Balls[iBall] = FVector2D::ZeroVector;
 				}
 			}
 		}
@@ -403,4 +369,8 @@ bool FJoystickDevice::AddEventListener(UObject* Listener)
 	return false;
 }
 
+void FJoystickDevice::IgnoreGameControllers(bool bIgnore)
+{
+	DeviceSDL->IgnoreGameControllers(bIgnore);
+}
 #undef LOCTEXT_NAMESPACE

@@ -3,6 +3,7 @@
 #include <IInputDevice.h>
 #include "JoystickInterface.h"
 
+struct FDeviceInfoSDL;
 class FDeviceSDL;
 
 class IJoystickEventInterface
@@ -33,6 +34,7 @@ public:
 	void SetChannelValues(int32 ControllerId, const FForceFeedbackValues& Values) override;
 
 	bool AddEventListener(UObject* Listener);
+	void IgnoreGameControllers(bool bIgnore);
 
 	virtual void JoystickPluggedIn(FDeviceIndex DeviceIndex) override;
 	virtual void JoystickUnplugged(FDeviceId DeviceId) override;
@@ -40,12 +42,13 @@ public:
 	virtual void JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value) override;
 	virtual void JoystickHat(FDeviceId DeviceId, int32 Hat, EJoystickPOVDirection Value) override;
 	virtual void JoystickBall(FDeviceId DeviceId, int32 Ball, FVector2D Delta) override;
+
 	TMap<FDeviceId, FJoystickState> CurrentState;
 	TMap<FDeviceId, FJoystickState> PreviousState;
 
 	TMap<FDeviceId, FJoystickInfo> InputDevices;
 private:
-	bool AddInputDevice(FDeviceId DeviceId);
+	void InitInputDevice(const FDeviceInfoSDL &Device);
 	void EmitEvents(const FJoystickState& previous, const FJoystickState& current);
 
 	TSharedPtr<FDeviceSDL> DeviceSDL;

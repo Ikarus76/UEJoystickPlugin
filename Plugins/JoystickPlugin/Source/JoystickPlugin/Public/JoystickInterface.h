@@ -62,13 +62,10 @@ struct FJoystickState
 {
 	GENERATED_USTRUCT_BODY()
 
-	explicit FJoystickState(int deviceId = -1)
-	: DeviceId(deviceId)
+	explicit FJoystickState(int DeviceId = -1)
+	: DeviceId(DeviceId)
 	{
 	}
-
-	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
-	FString DeviceName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickState)
 	int32 DeviceId;
@@ -95,8 +92,6 @@ struct FJoystickInfo
 	int32 Player = -1;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
 	int32 DeviceId = -1;
-	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
-	bool IsGameController = false;
 	UPROPERTY(EditAnywhere, BlueprintReadonly, Category = JoystickInfo)
 	bool IsRumbleDevice = false;
 

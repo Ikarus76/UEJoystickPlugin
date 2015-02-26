@@ -21,8 +21,12 @@ typedef struct _SDL_Haptic SDL_Haptic;
 struct _SDL_GameController;
 typedef struct _SDL_GameController SDL_GameController;
 
+union SDL_Event;
+
 struct FDeviceInfoSDL
 {
+	FDeviceInfoSDL() {}
+
 	FDeviceIndex DeviceIndex {0};
 	FDeviceId DeviceId {0};
 	FInstanceId InstanceId {0};
@@ -33,24 +37,25 @@ struct FDeviceInfoSDL
 
 	SDL_Haptic* Haptic = nullptr;
 	SDL_Joystick* Joystick = nullptr;
-	SDL_GameController* GameController = nullptr;
 };
 
 class FDeviceSDL
 {
 public:
-	bool GetDeviceState(FJoystickState &InputData, const FJoystickInfo &JoystickInfo, FDeviceId device);
+	FJoystickState InitialDeviceState(FDeviceId DeviceId);
 
-	static FString DeviceGUIDtoString(FDeviceIndex device);
-	static FGuid DeviceGUIDtoGUID(FDeviceIndex device);
+	static FString DeviceGUIDtoString(FDeviceIndex DeviceIndex);
+	static FGuid DeviceGUIDtoGUID(FDeviceIndex DeviceIndex);
 
-	bool InitDevice(FDeviceIndex deviceNumber, FDeviceInfoSDL &deviceInfo);
-	FDeviceInfoSDL * GetDevice(FDeviceId iDevice);
-	void DoneDevice(FDeviceId deviceInfo);
+	FDeviceInfoSDL InitDevice(FDeviceIndex DeviceIndex);
+	FDeviceInfoSDL * GetDevice(FDeviceId DeviceId);
+	void DoneDevice(FDeviceId DeviceId);
+	void IgnoreGameControllers(bool bIgnore);
 
 	void Update();
 
-	FDeviceSDL(IJoystickEventInterface * eventInterface);
+	FDeviceSDL(IJoystickEventInterface * EventInterface);
+	void Init();
 	virtual ~FDeviceSDL();
 
 private:
@@ -58,4 +63,10 @@ private:
 	TMap<FInstanceId, FDeviceId> DeviceMapping;
 
 	IJoystickEventInterface* EventInterface;
+
+	bool bOwnsSDL;
+
+	bool bIgnoreGameControllers = true;
+
+	static int HandleSDLEvent(void* Userdata, SDL_Event* Event);
 };
