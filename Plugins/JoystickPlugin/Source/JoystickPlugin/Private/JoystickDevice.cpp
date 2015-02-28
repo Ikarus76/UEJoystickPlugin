@@ -23,7 +23,7 @@ void FJoystickDevice::InitInputDevice(const FDeviceInfoSDL &Device)
 	FDeviceId DeviceId = Device.DeviceId;
 	FJoystickInfo DeviceInfo;
 
-	DeviceInfo.Connected = Device.bIsConnected;
+	DeviceInfo.Connected = true;
 	DeviceInfo.DeviceId = DeviceId.value;
 	DeviceInfo.Player = 0;
 
@@ -111,30 +111,23 @@ void FJoystickDevice::InitInputDevice(const FDeviceInfoSDL &Device)
 
 //Public API Implementation
 
-void FJoystickDevice::JoystickPluggedIn(FDeviceIndex DeviceIndex)
+void FJoystickDevice::JoystickPluggedIn(const FDeviceInfoSDL &DeviceInfoSDL)
 {
-	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), DeviceIndex.value);
+	UE_LOG(JoystickPluginLog, Log, TEXT("FJoystickPlugin::JoystickPluggedIn() %i"), DeviceInfoSDL.DeviceId.value);
 
-	FDeviceInfoSDL DeviceInfoSDL = DeviceSDL->InitDevice(DeviceIndex);
-	if (DeviceInfoSDL.bIsConnected)
+	InitInputDevice(DeviceInfoSDL);
+	for (auto & listener : EventListeners)
 	{
-		InitInputDevice(DeviceInfoSDL);
-		UE_LOG(JoystickPluginLog, Log, TEXT("	SUCCESS add device %i"), DeviceInfoSDL.DeviceId.value);
-		for (auto & listener : EventListeners)
+		UObject * o = listener.Get();
+		if (o != nullptr)
 		{
-			UObject * o = listener.Get();
-			if (o != nullptr)
-			{
-				IJoystickInterface::Execute_JoystickPluggedIn(o, DeviceInfoSDL.DeviceId.value);
-			}
+			IJoystickInterface::Execute_JoystickPluggedIn(o, DeviceInfoSDL.DeviceId.value);
 		}
 	}
 }
 
 void FJoystickDevice::JoystickUnplugged(FDeviceId DeviceId)
 {
-	DeviceSDL->DoneDevice(DeviceId);
-
 	InputDevices[DeviceId].Connected = false;
 
 	UE_LOG(JoystickPluginLog, Log, TEXT("Joystick %d disconnected"), DeviceId.value);

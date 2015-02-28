@@ -19,8 +19,8 @@
 
 DEFINE_LOG_CATEGORY(JoystickPluginLog);
 
-FDeviceSDL::FDeviceSDL(IJoystickEventInterface * eventInterface) :
-EventInterface(eventInterface)
+FDeviceSDL::FDeviceSDL(IJoystickEventInterface * eventInterface) 
+	: EventInterface(eventInterface)
 {
 }
 
@@ -40,8 +40,6 @@ void FDeviceSDL::Init()
 		bOwnsSDL = true;
 	}
 
-	SDL_AddEventWatch(HandleSDLEvent, this);
-
 	int result = SDL_InitSubSystem(SDL_INIT_HAPTIC);
 	if (result == 0)
 	{
@@ -59,6 +57,14 @@ void FDeviceSDL::Init()
 	{
 		UE_LOG(JoystickPluginLog, Log, TEXT("DeviceSDL::InitSDL() SDL init subsystem joystick"));
 	}
+
+	int Joysticks = SDL_NumJoysticks();
+	for (int i = 0; i < Joysticks; i++)
+	{
+		AddDevice(FDeviceIndex(i));
+	}
+
+	SDL_AddEventWatch(HandleSDLEvent, this);
 }
 
 FDeviceSDL::~FDeviceSDL()
@@ -67,7 +73,7 @@ FDeviceSDL::~FDeviceSDL()
 
 	for (auto & Device : Devices)
 	{
-		DoneDevice(Device.Key);
+		RemoveDevice(Device.Key);
 	}
 
 	SDL_DelEventWatch(HandleSDLEvent, this);
@@ -94,10 +100,9 @@ void FDeviceSDL::IgnoreGameControllers(bool bIgnore)
 		bIgnoreGameControllers = true;
 		for (auto &Device : Devices)
 		{
-			if (DeviceMapping.Contains(Device.Value.InstanceId) &&SDL_IsGameController(Device.Value.DeviceIndex.value))
+			if (DeviceMapping.Contains(Device.Value.InstanceId) && SDL_IsGameController(Device.Value.DeviceIndex.value))
 			{
-				DeviceMapping.Remove(Device.Value.InstanceId);
-				EventInterface->JoystickUnplugged(Device.Value.DeviceId);
+				RemoveDevice(Device.Key);
 			}
 		}
 	}
@@ -109,13 +114,13 @@ void FDeviceSDL::IgnoreGameControllers(bool bIgnore)
 		{
 			if (SDL_IsGameController(i))
 			{
-				EventInterface->JoystickPluggedIn(FDeviceIndex(i));
+				AddDevice(FDeviceIndex(i));
 			}
 		}
 	}
 }
 
-FDeviceInfoSDL FDeviceSDL::InitDevice(FDeviceIndex DeviceIndex)
+FDeviceInfoSDL FDeviceSDL::AddDevice(FDeviceIndex DeviceIndex)
 {
 	FDeviceInfoSDL Device;
 	if (SDL_IsGameController(DeviceIndex.value) && bIgnoreGameControllers)
@@ -141,8 +146,6 @@ FDeviceInfoSDL FDeviceSDL::InitDevice(FDeviceIndex DeviceIndex)
 	UE_LOG(JoystickPluginLog, Log, TEXT("--- Number of Buttons %i"), SDL_JoystickNumButtons(Device.Joystick));
 	UE_LOG(JoystickPluginLog, Log, TEXT("--- Number of Hats %i"), SDL_JoystickNumHats(Device.Joystick));
 
-	Device.bIsConnected = true;
-	
 	if (SDL_JoystickIsHaptic(Device.Joystick))
 	{
 		Device.Haptic = SDL_HapticOpenFromJoystick(Device.Joystick);
@@ -167,28 +170,35 @@ FDeviceInfoSDL FDeviceSDL::InitDevice(FDeviceIndex DeviceIndex)
 			}
 		}
 	}
+	
 
 	for (auto &ExistingDevice : Devices)
 	{
-		if (!ExistingDevice.Value.bIsConnected && ExistingDevice.Value.Name == Device.Name)
+		if (ExistingDevice.Value.Joystick == nullptr && ExistingDevice.Value.Name == Device.Name)
 		{
 			Device.DeviceId = ExistingDevice.Key;
 			Devices[Device.DeviceId] = Device;
+
 			DeviceMapping.Add(Device.InstanceId, Device.DeviceId);
+			EventInterface->JoystickPluggedIn(Device);
 			return Device;
 		}
 	}
 
 	Device.DeviceId = FDeviceId(Devices.Num());
 	Devices.Add(Device.DeviceId, Device);
-	DeviceMapping.Add(Device.InstanceId, Device.DeviceId);
 
+	DeviceMapping.Add(Device.InstanceId, Device.DeviceId);
+	EventInterface->JoystickPluggedIn(Device);
 	return Device;
 }
 
-void FDeviceSDL::DoneDevice(FDeviceId DeviceId)
+void FDeviceSDL::RemoveDevice(FDeviceId DeviceId)
 {
+	EventInterface->JoystickUnplugged(DeviceId);
+
 	FDeviceInfoSDL &DeviceInfo = Devices[DeviceId];
+	DeviceMapping.Remove(DeviceInfo.InstanceId);
 
 	if (DeviceInfo.Haptic != nullptr)
 	{
@@ -200,7 +210,6 @@ void FDeviceSDL::DoneDevice(FDeviceId DeviceId)
 	{
 		SDL_JoystickClose(DeviceInfo.Joystick);
 		DeviceInfo.Joystick = nullptr;
-		DeviceInfo.bIsConnected = false;
 	}
 }
 
@@ -278,9 +287,9 @@ int FDeviceSDL::HandleSDLEvent(void* Userdata, SDL_Event* Event)
 	switch (Event->type)
 	{
 	case SDL_JOYDEVICEADDED:
-		Self.EventInterface->JoystickPluggedIn(FDeviceIndex(Event->cdevice.which));
+		Self.AddDevice(FDeviceIndex(Event->cdevice.which));
 		break;
-	case SDL_CONTROLLERDEVICEADDED:
+	/*case SDL_CONTROLLERDEVICEADDED:
 	{
 		if (Self.bIgnoreGameControllers)
 		{
@@ -298,15 +307,14 @@ int FDeviceSDL::HandleSDLEvent(void* Userdata, SDL_Event* Event)
 			}
 		}
 		break;
-	}
+	}*/
 	case SDL_JOYDEVICEREMOVED:
 	{
 		FInstanceId InstanceId = FInstanceId(Event->cdevice.which);
 		if (Self.DeviceMapping.Contains(InstanceId))
 		{
 			FDeviceId DeviceId = Self.DeviceMapping[InstanceId];
-			Self.DeviceMapping.Remove(InstanceId);
-			Self.EventInterface->JoystickUnplugged(DeviceId);
+			Self.RemoveDevice(DeviceId);
 		}
 		break;
 	}

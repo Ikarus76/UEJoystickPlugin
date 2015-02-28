@@ -13,7 +13,7 @@ public:
 	{
 	}
 
-	virtual void JoystickPluggedIn(FDeviceIndex DeviceIndex) = 0;
+	virtual void JoystickPluggedIn(const FDeviceInfoSDL &Device) = 0;
 	virtual void JoystickUnplugged(FDeviceId DeviceId) = 0;
 	virtual void JoystickButton(FDeviceId DeviceId, int32 Button, bool Pressed) = 0;
 	virtual void JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value) = 0;
@@ -36,7 +36,7 @@ public:
 	bool AddEventListener(UObject* Listener);
 	void IgnoreGameControllers(bool bIgnore);
 
-	virtual void JoystickPluggedIn(FDeviceIndex DeviceIndex) override;
+	virtual void JoystickPluggedIn(const FDeviceInfoSDL &Device) override;
 	virtual void JoystickUnplugged(FDeviceId DeviceId) override;
 	virtual void JoystickButton(FDeviceId DeviceId, int32 Button, bool Pressed) override;
 	virtual void JoystickAxis(FDeviceId DeviceId, int32 Axis, float Value) override;

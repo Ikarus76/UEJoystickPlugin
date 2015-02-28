@@ -31,8 +31,6 @@ struct FDeviceInfoSDL
 	FDeviceId DeviceId {0};
 	FInstanceId InstanceId {0};
 
-	bool bIsConnected = false;
-
 	FString Name = "unknown";
 
 	SDL_Haptic* Haptic = nullptr;
@@ -47,9 +45,8 @@ public:
 	static FString DeviceGUIDtoString(FDeviceIndex DeviceIndex);
 	static FGuid DeviceGUIDtoGUID(FDeviceIndex DeviceIndex);
 
-	FDeviceInfoSDL InitDevice(FDeviceIndex DeviceIndex);
 	FDeviceInfoSDL * GetDevice(FDeviceId DeviceId);
-	void DoneDevice(FDeviceId DeviceId);
+	
 	void IgnoreGameControllers(bool bIgnore);
 
 	void Update();
@@ -59,6 +56,9 @@ public:
 	virtual ~FDeviceSDL();
 
 private:
+	FDeviceInfoSDL AddDevice(FDeviceIndex DeviceIndex);
+	void RemoveDevice(FDeviceId DeviceId);
+
 	TMap<FDeviceId, FDeviceInfoSDL> Devices;	
 	TMap<FInstanceId, FDeviceId> DeviceMapping;
 
