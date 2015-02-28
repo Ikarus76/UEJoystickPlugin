@@ -1,4 +1,6 @@
-#include "JoystickPluginPrivatePCH.h"
+
+#include <Engine.h>
+
 #include "JoystickDevice.h"
 
 #include "DeviceSDL.h"

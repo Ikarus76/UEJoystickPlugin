@@ -7,7 +7,7 @@
 * of the BSD license.  See the LICENSE file for details.
 */
 
-#include "JoystickPluginPrivatePCH.h"
+#include <Engine.h>
 #include "DeviceSDL.h"
 #include "JoystickDevice.h"
 

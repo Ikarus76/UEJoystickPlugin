@@ -1,6 +1,6 @@
-#include "JoystickPluginPrivatePCH.h"
 #if WITH_EDITOR
 
+#include <Engine.h>
 #include "InputSettingsCustomization.h"
 
 #include <Editor.h>

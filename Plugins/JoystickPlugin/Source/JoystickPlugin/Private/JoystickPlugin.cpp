@@ -1,4 +1,4 @@
-#include "JoystickPluginPrivatePCH.h"
+#include <Engine.h>
 #include "JoystickPlugin.h"
 
 #if WITH_EDITOR

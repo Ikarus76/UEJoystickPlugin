@@ -1,5 +1,5 @@
 
-#include "JoystickPluginPrivatePCH.h"
+#include <Engine.h>
 #include "JoystickFunctions.h"
 #include "IJoystickPlugin.h"
 #include "JoystickInterface.h"

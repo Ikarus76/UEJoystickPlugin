@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JoystickPluginPrivatePCH.h"
+#include <Engine.h>
 #include "JoystickInterface.h"
 
 UJoystickInterface::UJoystickInterface(const class FObjectInitializer& PCIP)
