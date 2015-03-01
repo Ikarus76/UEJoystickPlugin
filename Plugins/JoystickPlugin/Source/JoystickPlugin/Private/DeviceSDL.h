@@ -7,137 +7,66 @@
 * of the BSD license.  See the LICENSE file for details.
 */
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
 #pragma once
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_joystick.h"
-#include "SDL2/SDL_gamecontroller.h"
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-#include <SlateBasics.h>
-
-#include "IJoystickPlugin.h"
-#include "FJoystickPlugin.h"
+#include "JoystickInterface.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(JoystickPluginLog, Log, All);
 
-#include "JoystickPluginPrivatePCH.h"
+class IJoystickEventInterface;
+struct _SDL_Joystick;
+typedef struct _SDL_Joystick SDL_Joystick;
+struct _SDL_Haptic;
+typedef struct _SDL_Haptic SDL_Haptic;
+struct _SDL_GameController;
+typedef struct _SDL_GameController SDL_GameController;
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
+union SDL_Event;
 
-struct sDeviceInfoSDL
+struct FDeviceInfoSDL
 {
-	DeviceIndex deviceIndex {0};
-	DeviceId deviceId {0};
-	InstanceId instanceId {0};
+	FDeviceInfoSDL() {}
 
-	bool isConnected = false;
+	FDeviceIndex DeviceIndex {0};
+	FDeviceId DeviceId {0};
+	FInstanceId InstanceId {0};
 
-	FString strName = "unknown";
-	
-	bool isGameController = false;
-	bool isJoystick = false;
-	bool hasHaptic = false;
+	FString Name = "unknown";
 
-	SDL_Haptic *haptic = NULL;
-	SDL_Joystick *joystick = NULL;
-	SDL_GameController *gameController = NULL;
+	SDL_Haptic* Haptic = nullptr;
+	SDL_Joystick* Joystick = nullptr;
 };
 
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-class DeviceSDL
+class FDeviceSDL
 {
-
 public:
-	int32 getNumberOfDevices();
+	FJoystickState InitialDeviceState(FDeviceId DeviceId);
+
+	static FString DeviceGUIDtoString(FDeviceIndex DeviceIndex);
+	static FGuid DeviceGUIDtoGUID(FDeviceIndex DeviceIndex);
+
+	FDeviceInfoSDL * GetDevice(FDeviceId DeviceId);
 	
-	int32 getNumberOfAxes(DeviceId device = DeviceId(0));
-	int32 getNumberOfButtons(DeviceId device = DeviceId(0));
-	int32 getNumberOfHats(DeviceId device = DeviceId(0));
-	int32 getNumberOfBalls(DeviceId device = DeviceId(0));
+	void IgnoreGameControllers(bool bIgnore);
 
-	bool getDeviceSDL(DeviceId device, sDeviceInfoSDL &deviceInfo);
-	bool getDeviceState(FJoystickState &InputData, FJoystickInfo &JoystickInfo, DeviceId device);
+	void Update();
 
-	FString getDeviceName(DeviceId device = DeviceId(0));
-
-	Sint32 getDeviceInstanceId(DeviceId device = DeviceId(0));
-	FString getDeviceGUIDtoString(DeviceId device = DeviceId(0));
-	FGuid getDeviceGUIDtoGUID(DeviceId device = DeviceId(0));
-
-
-	//inline uint32 getTypeHash(const GUID guid)
-	//{
-	//	auto data = reinterpret_cast<const uint64*>(&guid);
-	//	return HashCombine(GetTypeHash(data[0]), GetTypeHash(data[1]));
-	//}
-
-	//inline FGuid ToFGuid(GUID g)
-	//{
-	//	FGuid guid;
-	//	memcpy(&guid, &g, sizeof(FGuid));
-	//	return guid;
-	//}
-
-	//inline GUID ToGUID(FGuid g)
-	//{
-	//	GUID guid;
-	//	memcpy(&guid, &g, sizeof(FGuid));
-	//	return guid;
-	//}	
-	
-	void resetDevices();
-	void resetDevice(DeviceId device = DeviceId(0));
-
-	//bool initDevices();
-	bool initDevice(DeviceIndex deviceNumber, sDeviceInfoSDL &deviceInfo);
-	sDeviceInfoSDL * getDevice(DeviceId iDevice = DeviceId(0));
-	bool doneDevice(DeviceId deviceInfo);
-
-	void update();
-
-	DeviceSDL(JoystickEventInterface * eventInterface);
-	virtual ~DeviceSDL();
-
-protected:
-	void initSDL();
-	void doneSDL();
+	FDeviceSDL(IJoystickEventInterface * EventInterface);
+	void Init();
+	virtual ~FDeviceSDL();
 
 private:
-	bool hasJoysticks;
-	bool hasGameController;
-	bool hasHaptic;
+	FDeviceInfoSDL AddDevice(FDeviceIndex DeviceIndex);
+	void RemoveDevice(FDeviceId DeviceId);
 
-	TMap<DeviceId, sDeviceInfoSDL> m_Devices;	
-	TMap<InstanceId, DeviceId> m_DeviceMapping;
-	
-	SDL_Event m_Event_SDL;
+	TMap<FDeviceId, FDeviceInfoSDL> Devices;	
+	TMap<FInstanceId, FDeviceId> DeviceMapping;
 
-	JoystickEventInterface* eventInterface;
+	IJoystickEventInterface* EventInterface;
+
+	bool bOwnsSDL;
+
+	bool bIgnoreGameControllers = true;
+
+	static int HandleSDLEvent(void* Userdata, SDL_Event* Event);
 };
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////
-
-
-
-//////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////

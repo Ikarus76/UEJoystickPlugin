@@ -4,7 +4,6 @@
 #include "InputSettingsCustomization.h"
 
 #include <Editor.h>
-#include <Engine.h>
 #include <DetailCustomizations.h>
 #include <PropertyCustomizationHelpers.h>
 #include <PropertyEditorDelegates.h>

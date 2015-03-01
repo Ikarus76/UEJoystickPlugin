@@ -6,7 +6,8 @@
 #define LOCTEXT_NAMESPACE "InputStructCustomization"
 
 /**
-* Customizes an InputActionKeyMapping struct to display it more simply
+* Customizes an InputActionKeyMapping struct to display it more simply.
+* Modified to have wider action selection fields.
 */
 class FInputActionMappingCustomizationExtended : public IPropertyTypeCustomization
 {
@@ -22,7 +23,8 @@ private:
 	TSharedPtr<class IPropertyHandle> ActionMappingHandle;
 };
 /**
-* Customizes an InputAxisKeyMapping struct to display it more simply
+* Customizes an InputAxisKeyMapping struct to display it more simply.
+* Modified to have wider axis selection fields.
 */
 class FInputAxisMappingCustomizationExtended : public IPropertyTypeCustomization
 {
