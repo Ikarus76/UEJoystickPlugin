@@ -68,7 +68,7 @@ namespace UnrealBuildTool.Rules
 			if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32)
 			{
 				PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, "SDL2", "SDL2", "Lib", "SDL2.lib"));
-				//PublicDelayLoadDLLs.Add("SDL2.dll");
+				PublicDelayLoadDLLs.Add("SDL2.dll");
 			}
 			else if (Target.Platform == UnrealTargetPlatform.Mac)
 			{
