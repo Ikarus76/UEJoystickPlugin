@@ -14,7 +14,7 @@
 		{
 			"Name": "JoystickPlugin",
 			"Type": "Runtime",
-			"WhitelistPlatforms": [ "Win64", "Win32" ]
+			"WhitelistPlatforms": [ "Win64", "Win32", "Linux", "Mac" ]
 		}
 	]
 }
