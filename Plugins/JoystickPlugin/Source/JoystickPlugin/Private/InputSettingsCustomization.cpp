@@ -8,6 +8,8 @@
 #include <PropertyCustomizationHelpers.h>
 #include <PropertyEditorDelegates.h>
 
+#define LOCTEXT_NAMESPACE "InputStructCustomization"
+
 namespace InputConstants
 {
 	const FMargin PropertyPadding(2.0f, 0.0f, 2.0f, 0.0f);
@@ -243,5 +245,7 @@ void FInputAxisMappingCustomizationExtended::RemoveAxisMappingButton_OnClick()
 		ParentArrayHandle->DeleteItem(AxisMappingHandle->GetIndexInArray());
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
 
 #endif

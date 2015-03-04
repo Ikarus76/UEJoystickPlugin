@@ -3,8 +3,6 @@
 #include <EditorStyle.h>
 #include <PropertyEditing.h>
 
-#define LOCTEXT_NAMESPACE "InputStructCustomization"
-
 /**
 * Customizes an InputActionKeyMapping struct to display it more simply.
 * Modified to have wider action selection fields.

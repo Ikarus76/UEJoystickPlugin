@@ -10,7 +10,7 @@ namespace UnrealBuildTool.Rules
 	{
 		// UE does not copy third party dlls to the output directory automatically.
 		// Link statically so you don't have to do it manually.
-		private const bool LinkThirdPartyStaticallyOnWindows = true;
+		private bool LinkThirdPartyStaticallyOnWindows = true;
 
 		private string ModulePath
 		{
