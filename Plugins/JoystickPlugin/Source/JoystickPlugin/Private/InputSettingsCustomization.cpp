@@ -1,12 +1,14 @@
-#include "JoystickPluginPrivatePCH.h"
 #if WITH_EDITOR
 
+#include <Engine.h>
 #include "InputSettingsCustomization.h"
 
 #include <Editor.h>
 #include <DetailCustomizations.h>
 #include <PropertyCustomizationHelpers.h>
 #include <PropertyEditorDelegates.h>
+
+#define LOCTEXT_NAMESPACE "InputStructCustomization"
 
 namespace InputConstants
 {
@@ -243,5 +245,7 @@ void FInputAxisMappingCustomizationExtended::RemoveAxisMappingButton_OnClick()
 		ParentArrayHandle->DeleteItem(AxisMappingHandle->GetIndexInArray());
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
 
 #endif

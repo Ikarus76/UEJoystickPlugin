@@ -1,8 +1,8 @@
-#include "JoystickPluginPrivatePCH.h"
+#include <Engine.h>
 #include "JoystickPlugin.h"
 
 #if WITH_EDITOR
-	#include <InputSettingsCustomization.h>
+	#include "InputSettingsCustomization.h"
 #endif
 
 IMPLEMENT_MODULE(FJoystickPlugin, JoystickPlugin)
@@ -13,6 +13,7 @@ void FJoystickPlugin::StartupModule()
 {
 	IJoystickPlugin::StartupModule();
 	JoystickDevice = MakeShareable(new ::FJoystickDevice());
+	//return;
 
 #if WITH_EDITOR
 	// Replace parts of the input settings widget to make them wide enough to fit long joystick names
