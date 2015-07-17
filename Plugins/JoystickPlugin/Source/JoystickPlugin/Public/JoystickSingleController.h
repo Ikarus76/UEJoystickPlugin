@@ -12,10 +12,10 @@ class UJoystickSingleController : public UObject
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int64 ButtonsPressedLow;
+	int32 ButtonsPressedLow;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
-	int64 ButtonsPressedHigh;
+	int32 ButtonsPressedHigh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joystick Frame")
 	FVector Axis;
