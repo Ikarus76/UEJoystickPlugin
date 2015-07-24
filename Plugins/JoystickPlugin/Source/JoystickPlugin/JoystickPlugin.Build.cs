@@ -34,7 +34,8 @@ namespace UnrealBuildTool.Rules
 			)
 		{
 			OutBuildBinaryConfigurations.Add(
-				new UEBuildBinaryConfiguration(UEBuildBinaryType.DynamicLinkLibrary, InTargetName: "SDL2.dll"));
+				new UEBuildBinaryConfiguration(UEBuildBinaryType.DynamicLinkLibrary, InProjectFilePath: "SDL2.dll")
+			);
 		}
 
 		public JoystickPlugin(TargetInfo Target)
