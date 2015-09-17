@@ -14,7 +14,8 @@ namespace UnrealBuildTool.Rules
 
 		private string ModulePath
 		{
-			get { return Path.GetDirectoryName(RulesCompiler.GetModuleFilename(this.GetType().Name)); }
+			//get { return Path.GetDirectoryName(RulesCompiler.GetModuleFilename(this.GetType().Name)); }
+			get { return Path.GetDirectoryName(RulesCompiler.GetFileNameFromType(this.GetType())); }
 		}
 
 		private string ThirdPartyPath
@@ -33,9 +34,9 @@ namespace UnrealBuildTool.Rules
 			ref List<string> OutExtraModuleNames
 			)
 		{
-			OutBuildBinaryConfigurations.Add(
-				new UEBuildBinaryConfiguration(UEBuildBinaryType.DynamicLinkLibrary, InProjectFilePath: "SDL2.dll")
-			);
+			//OutBuildBinaryConfigurations.Add(
+				//new UEBuildBinaryConfiguration(UEBuildBinaryType.DynamicLinkLibrary, InProjectFilePath: "SDL2.dll")
+			//);
 		}
 
 		public JoystickPlugin(TargetInfo Target)
