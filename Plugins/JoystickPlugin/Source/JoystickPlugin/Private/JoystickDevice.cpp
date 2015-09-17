@@ -31,7 +31,8 @@ void FJoystickDevice::InitInputDevice(const FDeviceInfoSDL &Device)
 
 	DeviceInfo.ProductId = FDeviceSDL::DeviceGUIDtoGUID(Device.DeviceIndex);
 	DeviceInfo.ProductName = Device.Name;
-	DeviceInfo.DeviceName = DeviceInfo.ProductName.Replace(TEXT(" "), TEXT(""));
+	DeviceInfo.DeviceName = DeviceInfo.ProductName.Replace(TEXT("."), TEXT(""));
+	DeviceInfo.ProductName = DeviceInfo.ProductName.Replace(TEXT("."), TEXT(""));
 
 	UE_LOG(JoystickPluginLog, Log, TEXT("add device %s %i"), *DeviceInfo.DeviceName, DeviceId.value);
 	InputDevices.Emplace(DeviceId, DeviceInfo);
