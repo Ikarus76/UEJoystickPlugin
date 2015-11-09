@@ -12,7 +12,7 @@ namespace UnrealBuildTool.Rules
 		// Link statically so you don't have to do it manually.
 		private bool LinkThirdPartyStaticallyOnWindows = true;
 
-// tsky GetModuleFilename os obsolete
+        // tsky GetModuleFilename is obsolete --> RulesCompiler.ModuleDirectory
 		private string ModulePath
 		{
 			get { return Path.GetDirectoryName(RulesCompiler.GetModuleFilename(this.GetType().Name)); }
@@ -85,20 +85,24 @@ namespace UnrealBuildTool.Rules
 
 			if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32)
 			{
-				PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "SDL2", "Include"));
+                string SDL2Path = ThirdPartyPath + "SDL2-2.0.3/";
+                string SDL2BinPath = SDL2Path + "lib/x64/";
+
+                PublicIncludePaths.Add(Path.Combine(SDL2Path, "include"));
+
+                PublicAdditionalLibraries.Add(Path.Combine(SDL2BinPath, "SDL2.lib"));
 				
-				string platform = Target.Platform == UnrealTargetPlatform.Win64 ? "Win64" : "Win32";
-				if (LinkThirdPartyStaticallyOnWindows)
-				{
-					PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, "SDL2", "Lib", platform, "SDL2.lib"));
-					PublicAdditionalLibraries.Add("Version.lib");
-				}
-				else
-				{
-					// Replace the .lib with one compiled for dynamic linking.
-					PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, "SDL2", "Lib", platform, "SDL2.lib"));
-					PublicDelayLoadDLLs.Add("SDL2.dll");
-				}
+				//string platform = Target.Platform == UnrealTargetPlatform.Win64 ? "x64" : "x86";
+				//if (LinkThirdPartyStaticallyOnWindows)
+				//{
+                //    PublicAdditionalLibraries.Add(Path.Combine(SDL2BinPath, platform, "SDL2.lib"));
+				//}
+				//else
+				//{
+				//    // Replace the .lib with one compiled for dynamic linking.
+				//    PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, platform, "SDL2.lib"));
+				//    PublicDelayLoadDLLs.Add("SDL2.dll");
+				//}
 			}
 			else if (Target.Platform == UnrealTargetPlatform.Mac)
 			{
@@ -106,10 +110,7 @@ namespace UnrealBuildTool.Rules
 			}
 			else if (Target.Platform == UnrealTargetPlatform.Linux)
 			{			
-				AddThirdPartyPrivateStaticDependencies(Target, 
-                    "SDL2"
-                    );
-				//tsky PublicAdditionalLibraries.Add("SDL2");
+				AddThirdPartyPrivateStaticDependencies(Target, "SDL2");
 			}
 
 		}
