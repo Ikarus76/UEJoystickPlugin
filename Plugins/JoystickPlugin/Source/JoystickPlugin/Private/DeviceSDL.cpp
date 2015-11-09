@@ -12,9 +12,9 @@
 #include "JoystickDevice.h"
 
 // @third party code - BEGIN SDL
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_joystick.h"
-#include "SDL2/SDL_gamecontroller.h"
+#include "SDL.h"
+#include "SDL_joystick.h"
+#include "SDL_gamecontroller.h"
 // @third party code - END SDL
 
 DEFINE_LOG_CATEGORY(JoystickPluginLog);

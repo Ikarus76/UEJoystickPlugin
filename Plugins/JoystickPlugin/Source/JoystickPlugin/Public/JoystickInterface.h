@@ -62,7 +62,7 @@ struct FJoystickState
 {
 	GENERATED_USTRUCT_BODY()
 
-	explicit FJoystickState(int DeviceId = -1)
+	explicit FJoystickState(int32 DeviceId = -1)
 	: DeviceId(DeviceId)
 	{
 	}
