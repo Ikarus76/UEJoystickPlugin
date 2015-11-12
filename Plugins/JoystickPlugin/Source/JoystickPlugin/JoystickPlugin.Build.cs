@@ -85,24 +85,14 @@ namespace UnrealBuildTool.Rules
 
 			if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32)
 			{
-                string SDL2Path = ThirdPartyPath + "SDL2-2.0.3/";
-                string SDL2BinPath = SDL2Path + "lib/x64/";
+                string SDL2Path = ThirdPartyPath + "SDL2/SDL2-2.0.3/";
+                string SDL2LibPath = SDL2Path + "Lib/";
 
                 PublicIncludePaths.Add(Path.Combine(SDL2Path, "include"));
 
-                PublicAdditionalLibraries.Add(Path.Combine(SDL2BinPath, "SDL2.lib"));
+                PublicAdditionalLibraries.Add(Path.Combine(SDL2LibPath, "SDL2-static.lib"));
+                PublicAdditionalLibraries.Add("Version.lib");
 				
-				//string platform = Target.Platform == UnrealTargetPlatform.Win64 ? "x64" : "x86";
-				//if (LinkThirdPartyStaticallyOnWindows)
-				//{
-                //    PublicAdditionalLibraries.Add(Path.Combine(SDL2BinPath, platform, "SDL2.lib"));
-				//}
-				//else
-				//{
-				//    // Replace the .lib with one compiled for dynamic linking.
-				//    PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, platform, "SDL2.lib"));
-				//    PublicDelayLoadDLLs.Add("SDL2.dll");
-				//}
 			}
 			else if (Target.Platform == UnrealTargetPlatform.Mac)
 			{
