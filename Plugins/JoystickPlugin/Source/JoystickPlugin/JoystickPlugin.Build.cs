@@ -88,7 +88,7 @@ namespace UnrealBuildTool.Rules
                 string SDL2Path = ThirdPartyPath + "SDL2/SDL2-2.0.3/";
                 string SDL2LibPath = SDL2Path + "Lib/";
 
-                PublicIncludePaths.Add(Path.Combine(SDL2Path, "include"));
+                PublicIncludePaths.Add(Path.Combine(SDL2Path, "include/"));
 
                 PublicAdditionalLibraries.Add(Path.Combine(SDL2LibPath, "SDL2-static.lib"));
                 PublicAdditionalLibraries.Add("Version.lib");
