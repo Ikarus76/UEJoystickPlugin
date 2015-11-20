@@ -10,7 +10,7 @@ namespace UnrealBuildTool.Rules
 	{
 		// UE does not copy third party dlls to the output directory automatically.
 		// Link statically so you don't have to do it manually.
-		private bool LinkThirdPartyStaticallyOnWindows = true;
+		private bool LinkThirdPartyStaticallyOnWindows = false;
 
         // tsky GetModuleFilename is obsolete --> RulesCompiler.ModuleDirectory
 		private string ModulePath
@@ -85,16 +85,26 @@ namespace UnrealBuildTool.Rules
 
 			if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32)
 			{
-                string SDL2Path = ThirdPartyPath + "SDL2/SDL2-2.0.3/";
+                string SDL2Path = ThirdPartyPath + "SDL2/SDL/";
                 string SDL2LibPath = SDL2Path + "Lib/";
 
                 PublicIncludePaths.Add(Path.Combine(SDL2Path, "include/"));
 
-                PublicAdditionalLibraries.Add(Path.Combine(SDL2LibPath, "SDL2-static.lib"));
-                PublicAdditionalLibraries.Add("Version.lib");
-				
-			}
-			else if (Target.Platform == UnrealTargetPlatform.Mac)
+                if (LinkThirdPartyStaticallyOnWindows) {
+                    PublicAdditionalLibraries.Add(Path.Combine(SDL2LibPath, "SDL2-static.lib"));
+                    PublicAdditionalLibraries.Add("Version.lib");
+
+                } else
+                {
+                    PublicAdditionalLibraries.Add(Path.Combine(SDL2LibPath, "SDL2.lib"));
+                    PublicAdditionalLibraries.Add("Version.lib");
+                }
+                //PublicAdditionalLibraries.Add("msvcrt.lib");
+                //PublicAdditionalLibraries.Add("ucrt.lib");
+                //PublicAdditionalLibraries.Add("vcruntime.lib");
+
+            }
+            else if (Target.Platform == UnrealTargetPlatform.Mac)
 			{
 				PublicFrameworks.Add("/Library/Frameworks/SDL2.framework");
 			}
