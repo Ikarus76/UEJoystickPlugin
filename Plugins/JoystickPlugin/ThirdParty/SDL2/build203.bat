@@ -3,6 +3,8 @@ echo on
 call "C:\Programme\Microsoft Visual Studio 12.0\VC\vcvarsall.bat"
 call "C:\Program Files\Microsoft Visual Studio 12.0\VC\vcvarsall.bat"
 call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat"
+
+call "C:\Programme\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
 
 SET SDL_DIR="SDL2-2.0.3"
