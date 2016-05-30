@@ -2,14 +2,13 @@
 
 #pragma once
 
-#include "ModuleManager.h"
-
-class JoystickDelegate;
+#include <ModuleManager.h>
+#include <IInputDeviceModule.h>
 
 /**
  * The public interface to this module
  */
-class IJoystickPlugin : public IModuleInterface
+class IJoystickPlugin : public IInputDeviceModule
 {
 
 public:
@@ -34,13 +33,5 @@ public:
 	{
 		return FModuleManager::Get().IsModuleLoaded("JoystickPlugin");
 	}
-
-	/**
-	 * Public API, implemented in FHydraPlugin.cpp
-	 * Required API called by HydraDelegate via HydraStartup() and HydraTick(float);
-	 */
-	virtual void ForceFeedbackXY(int32 x, int32 y, float magnitudeScale) {};
-	virtual void JoystickTick(float DeltaTime) {};
-	virtual void SetDelegate(JoystickDelegate* newDelegate) {};
 };
 

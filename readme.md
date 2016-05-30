@@ -1,43 +1,55 @@
-UEJoystickPlugin
-====================
+# UEJoystickPlugin
+This plugin uses SDL2 functions to get input instead of DirectInput.
 
-An event-driven [DirectInput Joystick](http://msdn.microsoft.com/en-gb/library/windows/desktop/ee418273) plugin with Input Mapping support for the Unreal Engine 4.
+Thank you Ikarus76 and samiljan for the good working basis. My implementation is a bit hacky, but I did not have much exercise and UE 4 is not easy.
+I was free and did everything so adjusted as I need it for my lab projects. 
 
-Allows for easy binding of all joysticks that support DirectInput API, including steering wheels and gamepads. Main method of interaction is through Unreal Engine's Input Mapping system. Should you require more nuanced scaling or mixing and splitting of inputs you can use the Blueprint Joystick Component and Blueprint Joystick Interface to extend any blueprint to receive the joystick events.
+Status:
+Sam Persson did code review, polishing and adding hotplug functionality. 
 
-See [unreal plugin thread](https://forums.unrealengine.com/showthread.php?51237-Joystick-Plugin) for downloads and development updates.
+Links for Software needed to compile the plugin:
 
-##How to install it##
+Windows:
 
-1. Download Plugin
-2. Create new or open a project.
-3. Browse to your project root (typically found at *Documents/Unreal Projects/{Your Project Root}*)
-4. Copy *Plugins* folder into your Project root.
-5. Restart the Editor and open your project again. Plugin should be enabled.
+* [Microsoft DirectX SDK Jun2010](https://www.microsoft.com/en-us/download/details.aspx?id=6812)
+* [Windows 8.1 SDK](https://msdn.microsoft.com/de-de/windows/desktop/bg162891.aspx#)
+* [Windows 10 SDK (If using Windows 10)](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
 
-##Setup for Use##
 
-<ol>
-<li> Input mapping should be automatically enabled, so you can setup your input mapping binds. But you will not receive joystick input until you've added either a JoystickPluginActor to the scene, or a JoystickComponent to any of your blueprints
-<li> <b>Option A</b>: JoystickPluginActor for simple input mapping support
-<br>2.1. Select Class Viewer
-<br><img src="http://i.imgur.com/YEzVwWt.png">
-<br>2.2. Find JoystickPluginActor and drag it into the scene. You can confirm it's in the scene by looking at the Scene Outliner.
-<br><img src="http://i.imgur.com/trBbvbU.png">
-<br>
-<li><b>Option B</b>: Joystick Component and JoystickInterface. If you want control over the joystick in blueprint directly for more fine-tuned control (scaling/mixing etc) as well as full button support (up to 128) past the 16 currently supported IM, this is the method to use.
-<br>3.1. add a Joystick Component to the relevant blueprint
-<br><img src="http://i.imgur.com/D9p2Ehb.png">
-<br>3.2. add a Joystick Interface to the same blueprint
-<br><img src="http://i.imgur.com/yd5Us2I.png">
-<br>3.3. You're done. Right click on the event graph and type 'Joystick' to narrow your events to Joystick related (NB: current version also emits PluggedIn and Unplugged)
-<br><img src="http://i.imgur.com/h3cxZ2L.png">
-<br>3.4. You can poll by dragging from the component return node, both latest frame and all events emit a JoystickState struct
-<br><img src="http://i.imgur.com/AX9lAcn.png">
-</ol>
+# How to use it
 
-##Todo##
-1. Add MFD
-2. Force Feedback support. 
+## Windows:
+Compiling SDL2 with Visual C++ 2015 is a painful process. Compiling with the Dynamic or Static library will do. But I am not able get the static version linked to my plugin at the moment, so for now I am using the dynamically linked (DLL) version.
 
-If you're good with Windows API, help out!
+1. Clone the repository branch 4.11 for UE4 version 4.11 (Or whichever is applicable)
+2. If the binary versions in repo are older, please consult the following steps. I put compiled versions for 4.10.1 in the repository.
+	1. Go to Plugins/JoystickPlugin/ThirdParty/SDL2
+	2. If you are doing this for the first time, run setup.bat. This will download the latest Mercurial branch source of SDL2.
+	3. Run build.bat to build the latest version of SDL2. This batch-files will copy the binaries to the bin directory of the plugin.
+	4. If you have installed CMake, Visual Studio 2013 or 2015, DirectX SDK Jun2010, the Windows 8.1/10 SDK and have built the SDL2 code, you should get SDL2 files in the SDL2/Lib directory. 
+3. You should have an UE4 Project (your project) with C++ Sources. If you do not have C++ sources, then create a Dummy Class. This will create an Visual Studio Project (to recreate: File -> Refresh Visual Studio Project). Once you have created a Class, the Visual Studio Editor comes up, the Editor initiates compiling in background. Now you can close VS and UE4 Editor.
+4. Copy the Plugins-Directory you checked out to your project. The Plugins folder should be in the root of the project. Refresh the Visual Studio Project files: File -> Refresh Visual Studio Project.
+5. Open the UE4 Project and be sure you have activated the JoystickPlugin.
+
+Now you can map Inputs to Joystick devices in Project Settings. (Engine->Input)
+
+Here is a Test Project using the Third-Person Template: [Download](https://w-hs.sciebo.de/index.php/s/148QVopCDdHwhLQ)
+Here is an minimal demo project: [Download](https://w-hs.sciebo.de/index.php/s/qajqJPsk1JGhFFM)
+
+-----------------------------------------------------------------------------------------------------------
+## Linux (Ubuntu 14.04 LTS): 
+*(TODO: test on fresh install systems (maybe I forgot something))*
+
+### Compile SDL2 as static library from source:
+
+1. Go to Engine/Source/ThirdParty/SDL2
+2. Call build.sh
+3. Ensure SDL2 has built successfully.
+4. Copy (or Link <- Symlinks seems not to work?!) the JoystickPlugin into /Engine/Plugins (result -> UnrealEngine/Engine/Plugins/JoystickPlugin)
+5. ./GenerateProjectFiles.sh to create the makefile which compiles the JoystickPlugin with the whole engine
+6. Compile
+7. Start editor and enable the JoystickPlugin
+8. If you have a compiled version of the plugin, you can copy/move the JoysticlPlugin directory to the project's plugins directory you want to use it.
+
+### Note:
+Linux Graphics: On my NVidia GTX750TI I needed the -opengl4 parameter for the editor to run.
